@@ -1,0 +1,12 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mercadoladb
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: mercadola
+    ports:
+      - 27017:27017
+    volumes:
+         - ./scripts:/docker-entrypoint-initdb.d
+    
