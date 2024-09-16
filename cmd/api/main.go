@@ -38,6 +38,10 @@ func main() {
 	logger := slog.Default()
 
 	cfg, err := config.GetConfig()
+	if err != nil {
+		logger.Error("Error trying load config", err)
+		os.Exit(1)
+	}
 
 	uri := cfg.Database.URI
 	if uri == "" {
