@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"log/slog"
@@ -11,36 +12,51 @@ import (
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
-	"github.com/joho/godotenv"
+	"github.com/mercadola/api/internal/customer"
 	"github.com/mercadola/api/internal/database"
+	"github.com/mercadola/api/internal/infrastruture/config"
 	"github.com/mercadola/api/internal/product"
 )
 
+func init() {
+	var rootPath string
+	flag.StringVar(&rootPath, "rootPath", "", "Provide project path as an absolute path")
+	flag.Parse()
+
+	if rootPath == "" {
+		rootPath, _ = os.Getwd()
+	}
+	os.Setenv("ROOT_PATH", rootPath)
+
+	fmt.Printf("provided path was %s\n", rootPath)
+}
+
 func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	logger := slog.Default()
 
-	if os.Getenv("ENV") != "CONTAINER" {
-		err := godotenv.Load()
-		if err != nil {
-			logger.Error("Error loading .env file")
-		}
-	}
-	uri := os.Getenv("MONGODB_URI")
+	cfg, err := config.GetConfig()
+
+	uri := cfg.Database.URI
 	if uri == "" {
 		log.Fatal("Set your 'MONGODB_URI' environment variable.")
 	}
+
 	logger.Info("Conectando ao banco...")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+
 	mongoClient, err := database.NewClient(uri, ctx)
 	if err != nil {
 		panic(err)
 	}
+
 	defer func() {
 		if err := mongoClient.Disconnect(ctx); err != nil {
 			panic(err)
 		}
 	}()
+
 	logger.Info("Conexão realizada com sucesso...")
 
 	router := chi.NewRouter()
@@ -51,16 +67,18 @@ func main() {
 	router.Use(middleware.Heartbeat("/health-check"))
 	router.Use(middleware.Timeout(60 * time.Second))
 
-	productRepository := product.NewProductRepository(mongoClient, logger)
+	productRepository := product.NewProductRepository(mongoClient, cfg, logger)
 	productService := product.NewService(productRepository)
 	productHandler := product.NewHandler(productService)
+	productHandler.RegisterRoutes(router)
 
-	router.Route("/products", func(r chi.Router) {
-		r.Get("/", productHandler.Find)
-	})
+	customerRepository := customer.NewCustomerRepository(mongoClient, cfg, logger)
+	customerService := customer.NewService(customerRepository)
+	customerHandler := customer.NewHandler(customerService)
+	customerHandler.RegisterRoutes(router)
 
-	fmt.Println("Starting server at port: " + os.Getenv("PORT"))
-	err = http.ListenAndServe(":"+os.Getenv("PORT"), router)
+	fmt.Println("Starting server at port: " + cfg.Port)
+	err = http.ListenAndServe(":"+cfg.Port, router)
 	if err != nil {
 		log.Fatalf("Unable start a server: %v", err)
 	}

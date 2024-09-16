@@ -1,4 +1,4 @@
-package product
+package customer
 
 import (
 	"encoding/json"
@@ -8,23 +8,23 @@ import (
 	"github.com/mercadola/api/pkg"
 )
 
-type ProductHandler struct {
-	Service ProductService
+type CustomerHandler struct {
+	Service CustomerService
 }
 
-func NewHandler(ps *ProductService) *ProductHandler {
-	return &ProductHandler{
-		Service: *ps,
+func NewHandler(cs *CustomerService) *CustomerHandler {
+	return &CustomerHandler{
+		Service: *cs,
 	}
 }
 
-func (h *ProductHandler) RegisterRoutes(r *chi.Mux) {
-	r.Route("/products", func(r chi.Router) {
+func (h *CustomerHandler) RegisterRoutes(r *chi.Mux) {
+	r.Route("/customers", func(r chi.Router) {
 		r.Get("/", h.Find)
 	})
 }
 
-func (handler *ProductHandler) Find(w http.ResponseWriter, r *http.Request) {
+func (handler *CustomerHandler) Find(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	query := FindQueryParams{}
 	query.Ean = r.URL.Query().Get("ean")
