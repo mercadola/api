@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/mercadola/api/internal/shared/exceptions"
+	"github.com/mercadola/api/pkg/exceptions"
 )
 
 type ProductHandler struct {

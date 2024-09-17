@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mercadola/api/internal/shared/exceptions"
+	"github.com/mercadola/api/pkg/exceptions"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
