@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth"
-	"github.com/mercadola/api/internal/shared/utils/exceptions"
+	"github.com/mercadola/api/internal/shared/exceptions"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

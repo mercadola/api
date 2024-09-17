@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/mercadola/api/pkg"
+	"github.com/mercadola/api/internal/shared/exceptions"
 )
 
 type ShoppingListHandler struct {
@@ -20,17 +20,17 @@ func NewHandler(ps *ShoppingListService) *ShoppingListHandler {
 
 func (h *ShoppingListHandler) RegisterRoutes(r *chi.Mux) {
 	r.Route("/shopping-list", func(r chi.Router) {
-		r.Get("/{customerId}", h.FindByCustomerId)
+		r.Get("/{customer_id}", h.FindByCustomerId)
 	})
 }
 
 func (handler *ShoppingListHandler) FindByCustomerId(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	customer_id := chi.URLParam(r, "customerId")
+	customer_id := chi.URLParam(r, "customer_id")
 	resp, err := handler.Service.FindByCustomerId(r.Context(), customer_id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		error := pkg.Error{Message: err.Error()}
+		error := exceptions.NewAppException(http.StatusNotFound, err.Error(), nil)
 		json.NewEncoder(w).Encode(error)
 		return
 	}

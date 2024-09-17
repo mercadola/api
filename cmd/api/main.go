@@ -88,7 +88,7 @@ func main() {
 	shoppingListRepository := shoppinglist.NewRepository(mongoClient, cfg, logger)
 	shoppinglistService := shoppinglist.NewService(shoppingListRepository)
 	shoppinglistHandler := shoppinglist.NewHandler(shoppinglistService)
-	shoppinglistHandler.RegisterRoutes(router)
+	shoppinglistHandler.RegisterRoutes(r)
 
 	fmt.Println("Starting server at port: " + cfg.Port)
 	err = http.ListenAndServe(":"+cfg.Port, r)

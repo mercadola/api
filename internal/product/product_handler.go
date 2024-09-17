@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/mercadola/api/pkg"
+	"github.com/mercadola/api/internal/shared/exceptions"
 )
 
 type ProductHandler struct {
@@ -32,7 +32,7 @@ func (handler *ProductHandler) Find(w http.ResponseWriter, r *http.Request) {
 	resp, err := handler.Service.Find(r.Context(), query)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		error := pkg.Error{Message: err.Error()}
+		error := exceptions.NewAppException(http.StatusNotFound, err.Error(), nil)
 		json.NewEncoder(w).Encode(error)
 		return
 	}
