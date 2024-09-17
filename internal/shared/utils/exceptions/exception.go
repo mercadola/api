@@ -34,12 +34,7 @@ func newAppException(statusCode int, reason string, message string, validationDe
 }
 
 func NewAppException(statusCode int, reason string, message string, validationDetails *[]ValidationException) *AppException {
-	switch statusCode {
-	case 400:
-		return newAppException(statusCode, reason, message, validationDetails)
-	default:
-		return newAppException(statusCode, reason, message, validationDetails)
-	}
+	return newAppException(statusCode, reason, message, validationDetails)
 }
 
 func ValidateException(validate *validator.Validate, dto any) error {

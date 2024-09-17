@@ -21,7 +21,27 @@ func NewService(cr *CustomerRepository) *CustomerService {
 	}
 }
 
+func (service *CustomerService) Authenticate(ctx context.Context, email, password string) (*Customer, error) {
+
+	finddedCustomer, err := service.FindByEmail(ctx, email)
+	if err != nil {
+		return nil, exceptions.NewAppException(http.StatusUnauthorized, "Unauthorized", "Invalid credentials", nil)
+	}
+
+	if !finddedCustomer.validatePassword(password) {
+		return nil, exceptions.NewAppException(http.StatusUnauthorized, "Unauthorized", "Invalid credentials", nil)
+	}
+
+	return finddedCustomer, nil
+}
+
 func (service *CustomerService) Create(ctx context.Context, customerDto *CustomerDto) (*Customer, error) {
+	finddedCustomers, _ := service.Find(ctx, findQueryParams{Email: customerDto.Email, CPF: customerDto.CPF})
+
+	if finddedCustomers != nil && len(*finddedCustomers) > 0 {
+		return nil, exceptions.NewAppException(http.StatusBadRequest, "Bad Request", "Customer already exists", nil)
+	}
+
 	pwHash, err := bcrypt.GenerateFromPassword([]byte(customerDto.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, exceptions.NewAppException(http.StatusInternalServerError, "Internal Server Error", err.Error(), nil)
@@ -76,6 +96,21 @@ func (service *CustomerService) Find(ctx context.Context, query findQueryParams)
 		customers = append(customers, p)
 	}
 	return &customers, nil
+}
+
+func (service *CustomerService) FindByEmail(ctx context.Context, email string) (*Customer, error) {
+	result := service.Repository.FindByEmail(ctx, email)
+	if result.Err() != nil {
+		if result.Err() == mongo.ErrNoDocuments {
+			return nil, exceptions.NewAppException(http.StatusNotFound, "Not Found", "Customer not found", nil)
+		}
+		return nil, exceptions.NewAppException(http.StatusInternalServerError, "Internal Server Error", result.Err().Error(), nil)
+	}
+
+	var customer Customer
+	result.Decode(customer)
+
+	return &customer, nil
 }
 
 func (service *CustomerService) FindById(ctx context.Context, id primitive.ObjectID) (*Customer, error) {

@@ -3,8 +3,10 @@ package customer
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth"
 	"github.com/mercadola/api/internal/shared/utils/exceptions"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -21,11 +23,52 @@ func NewHandler(cs *CustomerService) *CustomerHandler {
 
 func (h *CustomerHandler) RegisterRoutes(r *chi.Mux) {
 	r.Route("/customers", func(r chi.Router) {
+		r.Post("/authenticate", h.Authenticate)
 		r.Post("/", h.Create)
 		r.Get("/", h.Find)
 		r.Get("/{id}", h.FindById)
 		r.Delete("/{id}", h.Delete)
 	})
+}
+
+func (h *CustomerHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	jwtAuth := r.Context().Value("jwt").(*jwtauth.JWTAuth)
+	jwtExpiresIn := r.Context().Value("jwtExpiresIn").(int)
+
+	var customerDto CustomerDto
+
+	err := json.NewDecoder(r.Body).Decode(&customerDto)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		error := exceptions.NewAppException(http.StatusBadRequest, "Error trying decode request", err.Error(), nil)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+
+	customer, err := h.Service.Authenticate(r.Context(), customerDto.Email, customerDto.Password)
+	if err != nil {
+		if err, ok := err.(exceptions.AppException); ok {
+			w.WriteHeader(err.StatusCode)
+			json.NewEncoder(w).Encode(err)
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		error := exceptions.NewAppException(http.StatusInternalServerError, "Internal Server Error", err.Error(), nil)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+
+	_, token, _ := jwtAuth.Encode(map[string]interface{}{
+		"sub": customer.ID.String(),
+		"exp": time.Now().Add(time.Second * time.Duration(jwtExpiresIn)).Unix(),
+	})
+
+	accessToken := AutenticateOutput{AccessToken: token}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(accessToken)
 }
 
 func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +133,6 @@ func (h *CustomerHandler) Delete(w http.ResponseWriter, r *http.Request) {
 func (handler *CustomerHandler) Find(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	query := findQueryParams{}
-	query.Name = r.URL.Query().Get("name")
 	query.Email = r.URL.Query().Get("email")
 	query.CPF = r.URL.Query().Get("cpf")
 	resp, err := handler.Service.Find(r.Context(), query)

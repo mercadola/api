@@ -42,10 +42,6 @@ func (cr *CustomerRepository) Delete(ctx context.Context, id primitive.ObjectID)
 func (cr *CustomerRepository) Find(ctx context.Context, query findQueryParams) (*mongo.Cursor, error) {
 	filter := bson.M{}
 
-	if query.Name != "" {
-		filter["name"] = bson.M{"$eq": query.Name}
-	}
-
 	if query.Email != "" {
 		filter["email"] = bson.M{"$eq": query.Email}
 	}
@@ -59,6 +55,11 @@ func (cr *CustomerRepository) Find(ctx context.Context, query findQueryParams) (
 		return nil, err
 	}
 	return cursor, nil
+}
+
+func (cr *CustomerRepository) FindByEmail(ctx context.Context, email string) *mongo.SingleResult {
+	filter := bson.M{"email": email}
+	return cr.Collection.FindOne(ctx, filter)
 }
 
 func (cr *CustomerRepository) FindById(ctx context.Context, id primitive.ObjectID) *mongo.SingleResult {

@@ -6,7 +6,12 @@ import (
 
 	"github.com/mercadola/api/internal/shared/utils/exceptions"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 )
+
+type AutenticateOutput struct {
+	AccessToken string
+}
 
 type Customer struct {
 	ID       primitive.ObjectID `json:"id" bson:"_id"`
@@ -20,14 +25,19 @@ type Customer struct {
 	UpdateAt time.Time          `json:"update_at" bson:"update_at"`
 }
 
+func (c *Customer) validatePassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(c.Password), []byte(password))
+
+	return err == nil
+}
+
 type findQueryParams struct {
-	Name  string
 	Email string
 	CPF   string
 }
 
 func (params findQueryParams) Validate() error {
-	if params.Name == "" && params.Email == "" && params.CPF == "" {
+	if params.Email == "" && params.CPF == "" {
 		return exceptions.NewAppException(http.StatusBadRequest, "Bad Request", "Name, Email or CPF must be informed", nil)
 	}
 	return nil
