@@ -1,4 +1,4 @@
-package product
+package customer
 
 import (
 	"context"
@@ -15,17 +15,17 @@ type FindQueryParams struct {
 	Ncm string
 }
 
-type ProductRepository struct {
+type CustomerRepository struct {
 	Collection *mongo.Collection
 	Logger     *slog.Logger
 }
 
-func NewProductRepository(client *mongo.Client, cfg *config.Configuration, logger *slog.Logger) *ProductRepository {
-	collection := client.Database(cfg.DB).Collection(cfg.ProductCollection)
-	return &ProductRepository{Collection: collection, Logger: logger}
+func NewCustomerRepository(client *mongo.Client, cfg *config.Configuration, logger *slog.Logger) *CustomerRepository {
+	collection := client.Database(cfg.DB).Collection(cfg.CustomerCollection)
+	return &CustomerRepository{Collection: collection, Logger: logger}
 }
 
-func (pr *ProductRepository) Find(ctx context.Context, query FindQueryParams) (*mongo.Cursor, error) {
+func (cr *CustomerRepository) Find(ctx context.Context, query FindQueryParams) (*mongo.Cursor, error) {
 	filter := bson.M{}
 
 	if query.Ean != "" {
@@ -36,7 +36,7 @@ func (pr *ProductRepository) Find(ctx context.Context, query FindQueryParams) (*
 	if query.Ncm != "" {
 		filter["ncm.code"] = bson.M{"$eq": query.Ncm}
 	}
-	cursor, err := pr.Collection.Find(ctx, filter)
+	cursor, err := cr.Collection.Find(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
