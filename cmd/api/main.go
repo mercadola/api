@@ -63,26 +63,29 @@ func main() {
 
 	logger.Info("Conexão realizada com sucesso...")
 
-	router := chi.NewRouter()
-	router.Use(middleware.RequestID)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.Heartbeat("/health-check"))
-	router.Use(middleware.Timeout(60 * time.Second))
+	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Heartbeat("/health-check"))
+	r.Use(middleware.Timeout(60 * time.Second))
+
+	r.Use(middleware.WithValue("jwt", cfg.TokenAuth))
+	r.Use(middleware.WithValue("jwtExpiresIn", cfg.JWTExpiresIn))
 
 	productRepository := product.NewProductRepository(mongoClient, cfg, logger)
 	productService := product.NewService(productRepository)
 	productHandler := product.NewHandler(productService)
-	productHandler.RegisterRoutes(router)
+	productHandler.RegisterRoutes(r)
 
 	customerRepository := customer.NewCustomerRepository(mongoClient, cfg, logger)
 	customerService := customer.NewService(customerRepository)
 	customerHandler := customer.NewHandler(customerService)
-	customerHandler.RegisterRoutes(router)
+	customerHandler.RegisterRoutes(r)
 
 	fmt.Println("Starting server at port: " + cfg.Port)
-	err = http.ListenAndServe(":"+cfg.Port, router)
+	err = http.ListenAndServe(":"+cfg.Port, r)
 	if err != nil {
 		log.Fatalf("Unable start a server: %v", err)
 	}
