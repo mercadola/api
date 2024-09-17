@@ -4,13 +4,31 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/mercadola/api/internal/shared/utils/exceptions"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
+type AuthenticateInput struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+}
+
+func (dto *AuthenticateInput) Validate() error {
+	return exceptions.ValidateException(validator.New(), dto)
+}
+
 type AutenticateOutput struct {
-	AccessToken string
+	AccessToken string `json:"accessToken"`
+}
+
+type FindByEmailInput struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+func (dto *FindByEmailInput) Validate() error {
+	return exceptions.ValidateException(validator.New(), dto)
 }
 
 type Customer struct {
@@ -38,20 +56,30 @@ type findQueryParams struct {
 
 func (params findQueryParams) Validate() error {
 	if params.Email == "" && params.CPF == "" {
-		return exceptions.NewAppException(http.StatusBadRequest, "Bad Request", "Name, Email or CPF must be informed", nil)
+		return exceptions.NewAppException(http.StatusBadRequest, "Email or CPF must be informed", nil)
 	}
 	return nil
 }
 
+type SexoEnumeration string
+
+const (
+	Male      = "Male"
+	Female    = "Female"
+	Undefined = "Undefined"
+)
+
 type CustomerDto struct {
-	Name     string `json:"name" validate:"required"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8,max=20"`
-	CPF      string `json:"cpf" validate:"required"`
-	Phone    string `json:"phone" validate:"required"`
-	Cep      string `json:"cep,omitempty"`
+	Name     string          `json:"name" validate:"required"`
+	Email    string          `json:"email" validate:"required,email"`
+	Password string          `json:"password" validate:"required,min=8,max=20"`
+	CPF      string          `json:"cpf" validate:"required"`
+	Phone    string          `json:"phone" validate:"required,len=11"`
+	Cep      string          `json:"cep,omitempty" validate:"len=8"`
+	Gender   SexoEnumeration `json:"gender,omitempty" validate:"oneof=Male Female Undefined"`
+	Birthday time.Time       `json:"birthday,omitempty"`
 }
 
 func (dto *CustomerDto) Validate() error {
-	return dto.Validate()
+	return exceptions.ValidateException(validator.New(), dto)
 }

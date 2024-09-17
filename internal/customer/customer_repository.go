@@ -40,15 +40,17 @@ func (cr *CustomerRepository) Delete(ctx context.Context, id primitive.ObjectID)
 }
 
 func (cr *CustomerRepository) Find(ctx context.Context, query findQueryParams) (*mongo.Cursor, error) {
-	filter := bson.M{}
+	params := bson.A{}
 
 	if query.Email != "" {
-		filter["email"] = bson.M{"$eq": query.Email}
+		params = append(params, bson.M{"email": query.Email})
 	}
 
 	if query.CPF != "" {
-		filter["cpf"] = bson.M{"$eq": query.CPF}
+		params = append(params, bson.M{"cpf": query.CPF})
 	}
+
+	filter := bson.M{"$or": params}
 
 	cursor, err := cr.Collection.Find(ctx, filter)
 	if err != nil {

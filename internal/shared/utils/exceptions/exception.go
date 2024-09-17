@@ -33,8 +33,22 @@ func newAppException(statusCode int, reason string, message string, validationDe
 	}
 }
 
-func NewAppException(statusCode int, reason string, message string, validationDetails *[]ValidationException) *AppException {
-	return newAppException(statusCode, reason, message, validationDetails)
+func NewAppException(statusCode int, message string, validationDetails *[]ValidationException) *AppException {
+	switch statusCode {
+	case http.StatusBadRequest:
+		return newAppException(statusCode, "Bad Request", message, validationDetails)
+	case http.StatusUnauthorized:
+		return newAppException(statusCode, "Unauthorized", message, validationDetails)
+	case http.StatusForbidden:
+		return newAppException(statusCode, "Forbidden", message, validationDetails)
+	case http.StatusNotFound:
+		return newAppException(statusCode, "Not Found", message, validationDetails)
+	case http.StatusConflict:
+		return newAppException(statusCode, "Conflict", message, validationDetails)
+	default:
+		return newAppException(http.StatusInternalServerError, "Internal Server Error", message, validationDetails)
+	}
+
 }
 
 func ValidateException(validate *validator.Validate, dto any) error {

@@ -21,30 +21,38 @@ func NewService(cr *CustomerRepository) *CustomerService {
 	}
 }
 
-func (service *CustomerService) Authenticate(ctx context.Context, email, password string) (*Customer, error) {
-
-	finddedCustomer, err := service.FindByEmail(ctx, email)
-	if err != nil {
-		return nil, exceptions.NewAppException(http.StatusUnauthorized, "Unauthorized", "Invalid credentials", nil)
+func (service *CustomerService) Authenticate(ctx context.Context, authenticateInput AuthenticateInput) (*Customer, error) {
+	if err := authenticateInput.Validate(); err != nil {
+		return nil, err
 	}
 
-	if !finddedCustomer.validatePassword(password) {
-		return nil, exceptions.NewAppException(http.StatusUnauthorized, "Unauthorized", "Invalid credentials", nil)
+	finddedCustomer, err := service.FindByEmail(ctx, FindByEmailInput{Email: authenticateInput.Email})
+
+	if err != nil {
+		return nil, exceptions.NewAppException(http.StatusUnauthorized, "Invalid credentials", nil)
+	}
+
+	if !finddedCustomer.validatePassword(authenticateInput.Password) {
+		return nil, exceptions.NewAppException(http.StatusUnauthorized, "Invalid credentials", nil)
 	}
 
 	return finddedCustomer, nil
 }
 
 func (service *CustomerService) Create(ctx context.Context, customerDto *CustomerDto) (*Customer, error) {
+	if err := customerDto.Validate(); err != nil {
+		return nil, err
+	}
+
 	finddedCustomers, _ := service.Find(ctx, findQueryParams{Email: customerDto.Email, CPF: customerDto.CPF})
 
 	if finddedCustomers != nil && len(*finddedCustomers) > 0 {
-		return nil, exceptions.NewAppException(http.StatusBadRequest, "Bad Request", "Customer already exists", nil)
+		return nil, exceptions.NewAppException(http.StatusConflict, "Customer already exists", nil)
 	}
 
 	pwHash, err := bcrypt.GenerateFromPassword([]byte(customerDto.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, exceptions.NewAppException(http.StatusInternalServerError, "Internal Server Error", err.Error(), nil)
+		return nil, exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
 	}
 
 	customer := Customer{
@@ -53,7 +61,7 @@ func (service *CustomerService) Create(ctx context.Context, customerDto *Custome
 		Email:    customerDto.Email,
 		Password: string(pwHash),
 		CPF:      customerDto.CPF,
-		Phone:    customerDto.Phone,
+		Phone:    "+55" + customerDto.Phone,
 		Cep:      customerDto.Cep,
 		CreateAt: time.Now(),
 		UpdateAt: time.Now(),
@@ -61,7 +69,7 @@ func (service *CustomerService) Create(ctx context.Context, customerDto *Custome
 
 	err = service.Repository.Create(ctx, customer)
 	if err != nil {
-		return nil, exceptions.NewAppException(http.StatusInternalServerError, "Internal Server Error", err.Error(), nil)
+		return nil, exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
 	}
 
 	// TODO DISPARO DE E-MAIL DE BOAS VINDAS
@@ -73,14 +81,18 @@ func (service *CustomerService) Delete(ctx context.Context, id primitive.ObjectI
 	err := service.Repository.Delete(ctx, id)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return exceptions.NewAppException(http.StatusNotFound, "Not Found", "Customer not found", nil)
+			return exceptions.NewAppException(http.StatusNotFound, "Customer not found", nil)
 		}
-		return exceptions.NewAppException(http.StatusInternalServerError, "Internal Server Error", err.Error(), nil)
+		return exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
 	}
 	return nil
 }
 
 func (service *CustomerService) Find(ctx context.Context, query findQueryParams) (*[]Customer, error) {
+	if err := query.Validate(); err != nil {
+		return nil, err
+	}
+
 	cursor, err := service.Repository.Find(ctx, query)
 	if err != nil {
 		return nil, err
@@ -98,13 +110,16 @@ func (service *CustomerService) Find(ctx context.Context, query findQueryParams)
 	return &customers, nil
 }
 
-func (service *CustomerService) FindByEmail(ctx context.Context, email string) (*Customer, error) {
-	result := service.Repository.FindByEmail(ctx, email)
+func (service *CustomerService) FindByEmail(ctx context.Context, findByEmail FindByEmailInput) (*Customer, error) {
+	if err := findByEmail.Validate(); err != nil {
+		return nil, err
+	}
+	result := service.Repository.FindByEmail(ctx, findByEmail.Email)
 	if result.Err() != nil {
 		if result.Err() == mongo.ErrNoDocuments {
-			return nil, exceptions.NewAppException(http.StatusNotFound, "Not Found", "Customer not found", nil)
+			return nil, exceptions.NewAppException(http.StatusNotFound, "Customer not found", nil)
 		}
-		return nil, exceptions.NewAppException(http.StatusInternalServerError, "Internal Server Error", result.Err().Error(), nil)
+		return nil, exceptions.NewAppException(http.StatusInternalServerError, result.Err().Error(), nil)
 	}
 
 	var customer Customer
@@ -117,9 +132,9 @@ func (service *CustomerService) FindById(ctx context.Context, id primitive.Objec
 	result := service.Repository.FindById(ctx, id)
 	if result.Err() != nil {
 		if result.Err() == mongo.ErrNoDocuments {
-			return nil, exceptions.NewAppException(http.StatusNotFound, "Not Found", "Customer not found", nil)
+			return nil, exceptions.NewAppException(http.StatusNotFound, "Customer not found", nil)
 		}
-		return nil, exceptions.NewAppException(http.StatusInternalServerError, "Internal Server Error", result.Err().Error(), nil)
+		return nil, exceptions.NewAppException(http.StatusInternalServerError, result.Err().Error(), nil)
 	}
 
 	var customer Customer
@@ -129,13 +144,17 @@ func (service *CustomerService) FindById(ctx context.Context, id primitive.Objec
 }
 
 func (service *CustomerService) Update(ctx context.Context, id primitive.ObjectID, customerDto CustomerDto) error {
+	if err := customerDto.Validate(); err != nil {
+		return err
+	}
+
 	customer := Customer{
 		ID:       id,
 		Name:     customerDto.Name,
 		Email:    customerDto.Email,
 		Password: customerDto.Password,
 		CPF:      customerDto.CPF,
-		Phone:    customerDto.Phone,
+		Phone:    "+55" + customerDto.Phone,
 		Cep:      customerDto.Cep,
 		UpdateAt: time.Now(),
 	}
@@ -144,9 +163,9 @@ func (service *CustomerService) Update(ctx context.Context, id primitive.ObjectI
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return exceptions.NewAppException(http.StatusNotFound, "Not Found", "Customer not found", nil)
+			return exceptions.NewAppException(http.StatusNotFound, "Customer not found", nil)
 		}
-		return exceptions.NewAppException(http.StatusInternalServerError, "Internal Server Error", err.Error(), nil)
+		return exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
 	}
 	return nil
 }
