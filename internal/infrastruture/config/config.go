@@ -7,10 +7,11 @@ import (
 )
 
 type Database struct {
-	URI                string `mapstructure:"MONGODB_URI"`
-	CustomerCollection string `mapstructure:"CUSTOMER_COLLECTION"`
-	ProductCollection  string `mapstructure:"PRODUCT_COLLECTION"`
-	DB                 string `mapstructure:"DATABASE"`
+	URI                    string `mapstructure:"MONGODB_URI"`
+	CustomerCollection     string `mapstructure:"CUSTOMER_COLLECTION"`
+	ProductCollection      string `mapstructure:"PRODUCT_COLLECTION"`
+	ShoppingListCollection string `mapstructure:"SHOPPING_LIST_COLLECTION"`
+	DB                     string `mapstructure:"DATABASE"`
 }
 
 type Configuration struct {

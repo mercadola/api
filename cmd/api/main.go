@@ -13,9 +13,10 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/mercadola/api/internal/customer"
-	"github.com/mercadola/api/internal/database"
 	"github.com/mercadola/api/internal/infrastruture/config"
+	"github.com/mercadola/api/internal/infrastruture/database"
 	"github.com/mercadola/api/internal/product"
+	shoppinglist "github.com/mercadola/api/internal/shopping_list"
 )
 
 func init() {
@@ -71,7 +72,7 @@ func main() {
 	router.Use(middleware.Heartbeat("/health-check"))
 	router.Use(middleware.Timeout(60 * time.Second))
 
-	productRepository := product.NewProductRepository(mongoClient, cfg, logger)
+	productRepository := product.NewRepository(mongoClient, cfg, logger)
 	productService := product.NewService(productRepository)
 	productHandler := product.NewHandler(productService)
 	productHandler.RegisterRoutes(router)
@@ -80,6 +81,11 @@ func main() {
 	customerService := customer.NewService(customerRepository)
 	customerHandler := customer.NewHandler(customerService)
 	customerHandler.RegisterRoutes(router)
+
+	shoppingListRepository := shoppinglist.NewRepository(mongoClient, cfg, logger)
+	shoppinglistService := shoppinglist.NewService(shoppingListRepository)
+	shoppinglistHandler := shoppinglist.NewHandler(shoppinglistService)
+	shoppinglistHandler.RegisterRoutes(router)
 
 	fmt.Println("Starting server at port: " + cfg.Port)
 	err = http.ListenAndServe(":"+cfg.Port, router)

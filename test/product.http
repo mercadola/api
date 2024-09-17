@@ -1,0 +1,12 @@
+@hostname = http://localhost:{{$dotenv PORT}}
+###
+# @name list
+GET {{hostname}}/products HTTP/1.1
+
+###
+# @name getByEan
+GET {{hostname}}/products?ean=7898204730013 HTTP/1.1
+
+###
+# @name getByNcm
+GET {{hostname}}/products?ncm=17019900 HTTP/1.1

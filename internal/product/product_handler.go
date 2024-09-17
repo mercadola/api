@@ -26,7 +26,7 @@ func (h *ProductHandler) RegisterRoutes(r *chi.Mux) {
 
 func (handler *ProductHandler) Find(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	query := FindQueryParams{}
+	query := FindProductQueryParams{}
 	query.Ean = r.URL.Query().Get("ean")
 	query.Ncm = r.URL.Query().Get("ncm")
 	resp, err := handler.Service.Find(r.Context(), query)

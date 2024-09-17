@@ -1,0 +1,4 @@
+@hostname = http://localhost:{{$dotenv PORT}}
+
+###
+GET {{hostname}}/shopping-list/05625f61-619d-4cf0-90d6-e28b3913c932 HTTP/1.1

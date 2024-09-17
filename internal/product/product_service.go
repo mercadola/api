@@ -13,7 +13,7 @@ func NewService(pr *ProductRepository) *ProductService {
 		Repository: *pr,
 	}
 }
-func (service *ProductService) Find(ctx context.Context, query FindQueryParams) (*[]Product, error) {
+func (service *ProductService) Find(ctx context.Context, query FindProductQueryParams) (*[]Product, error) {
 	cursor, err := service.Repository.Find(ctx, query)
 	if err != nil {
 		return nil, err
