@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/mercadola/api/pkg"
+	"github.com/mercadola/api/pkg/exceptions"
 )
 
 type ProductHandler struct {
@@ -26,13 +26,13 @@ func (h *ProductHandler) RegisterRoutes(r *chi.Mux) {
 
 func (handler *ProductHandler) Find(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	query := FindQueryParams{}
+	query := FindProductQueryParams{}
 	query.Ean = r.URL.Query().Get("ean")
 	query.Ncm = r.URL.Query().Get("ncm")
 	resp, err := handler.Service.Find(r.Context(), query)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		error := pkg.Error{Message: err.Error()}
+		error := exceptions.NewAppException(http.StatusNotFound, err.Error(), nil)
 		json.NewEncoder(w).Encode(error)
 		return
 	}

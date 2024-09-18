@@ -13,9 +13,10 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/mercadola/api/internal/customer"
-	"github.com/mercadola/api/internal/database"
 	"github.com/mercadola/api/internal/infrastruture/config"
+	"github.com/mercadola/api/internal/infrastruture/database"
 	"github.com/mercadola/api/internal/product"
+	shoppinglist "github.com/mercadola/api/internal/shopping_list"
 )
 
 func init() {
@@ -74,7 +75,7 @@ func main() {
 	r.Use(middleware.WithValue("jwt", cfg.TokenAuth))
 	r.Use(middleware.WithValue("jwtExpiresIn", cfg.JWTExpiresIn))
 
-	productRepository := product.NewProductRepository(mongoClient, cfg, logger)
+	productRepository := product.NewRepository(mongoClient, cfg, logger)
 	productService := product.NewService(productRepository)
 	productHandler := product.NewHandler(productService)
 	productHandler.RegisterRoutes(r)
@@ -83,6 +84,11 @@ func main() {
 	customerService := customer.NewService(customerRepository)
 	customerHandler := customer.NewHandler(customerService)
 	customerHandler.RegisterRoutes(r)
+
+	shoppingListRepository := shoppinglist.NewRepository(mongoClient, cfg, logger)
+	shoppinglistService := shoppinglist.NewService(shoppingListRepository)
+	shoppinglistHandler := shoppinglist.NewHandler(shoppinglistService)
+	shoppinglistHandler.RegisterRoutes(r)
 
 	fmt.Println("Starting server at port: " + cfg.Port)
 	err = http.ListenAndServe(":"+cfg.Port, r)

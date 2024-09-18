@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type FindQueryParams struct {
+type FindProductQueryParams struct {
 	Ean string
 	Ncm string
 }
@@ -20,12 +20,12 @@ type ProductRepository struct {
 	Logger     *slog.Logger
 }
 
-func NewProductRepository(client *mongo.Client, cfg *config.Configuration, logger *slog.Logger) *ProductRepository {
+func NewRepository(client *mongo.Client, cfg *config.Configuration, logger *slog.Logger) *ProductRepository {
 	collection := client.Database(cfg.DB).Collection(cfg.ProductCollection)
 	return &ProductRepository{Collection: collection, Logger: logger}
 }
 
-func (pr *ProductRepository) Find(ctx context.Context, query FindQueryParams) (*mongo.Cursor, error) {
+func (pr *ProductRepository) Find(ctx context.Context, query FindProductQueryParams) (*mongo.Cursor, error) {
 	filter := bson.M{}
 
 	if query.Ean != "" {

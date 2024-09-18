@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/mercadola/api/internal/shared/utils/exceptions"
+	"github.com/mercadola/api/pkg/exceptions"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
