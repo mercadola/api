@@ -56,15 +56,15 @@ func (service *CustomerService) Create(ctx context.Context, customerDto *Custome
 	}
 
 	customer := Customer{
-		ID:       primitive.NewObjectID(),
-		Name:     customerDto.Name,
-		Email:    customerDto.Email,
-		Password: string(pwHash),
-		CPF:      customerDto.CPF,
-		Phone:    "+55" + customerDto.Phone,
-		Cep:      customerDto.Cep,
-		CreateAt: time.Now(),
-		UpdateAt: time.Now(),
+		ID:        primitive.NewObjectID(),
+		Name:      customerDto.Name,
+		Email:     customerDto.Email,
+		Password:  string(pwHash),
+		CPF:       customerDto.CPF,
+		Phone:     "+55" + customerDto.Phone,
+		Cep:       customerDto.Cep,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	err = service.Repository.Create(ctx, customer)
@@ -149,14 +149,14 @@ func (service *CustomerService) Update(ctx context.Context, id primitive.ObjectI
 	}
 
 	customer := Customer{
-		ID:       id,
-		Name:     customerDto.Name,
-		Email:    customerDto.Email,
-		Password: customerDto.Password,
-		CPF:      customerDto.CPF,
-		Phone:    "+55" + customerDto.Phone,
-		Cep:      customerDto.Cep,
-		UpdateAt: time.Now(),
+		ID:        id,
+		Name:      customerDto.Name,
+		Email:     customerDto.Email,
+		Password:  customerDto.Password,
+		CPF:       customerDto.CPF,
+		Phone:     "+55" + customerDto.Phone,
+		Cep:       customerDto.Cep,
+		UpdatedAt: time.Now(),
 	}
 
 	err := service.Repository.Update(ctx, customer)
