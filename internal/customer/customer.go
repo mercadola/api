@@ -32,15 +32,15 @@ func (dto *FindByEmailInput) Validate() error {
 }
 
 type Customer struct {
-	ID       primitive.ObjectID `json:"id" bson:"_id"`
-	Name     string             `json:"name" bson:"name"`
-	Email    string             `json:"email" bson:"email"`
-	Password string             `json:"password" bson:"password"`
-	CPF      string             `json:"cpf" bson:"cpf"`
-	Phone    string             `json:"phone" bson:"phone"`
-	Cep      string             `json:"cep" bson:"cep"`
-	CreateAt time.Time          `json:"create_at" bson:"create_at"`
-	UpdateAt time.Time          `json:"update_at" bson:"update_at"`
+	ID        primitive.ObjectID `json:"id" bson:"_id"`
+	Name      string             `json:"name" bson:"name"`
+	Email     string             `json:"email" bson:"email"`
+	Password  string             `json:"password" bson:"password"`
+	CPF       string             `json:"cpf" bson:"cpf"`
+	Phone     string             `json:"phone" bson:"phone"`
+	Cep       string             `json:"cep" bson:"cep"`
+	CreatedAt time.Time          `json:"create_at" bson:"create_at"`
+	UpdatedAt time.Time          `json:"update_at" bson:"update_at"`
 }
 
 func (c *Customer) validatePassword(password string) bool {
@@ -61,7 +61,7 @@ func (params findQueryParams) Validate() error {
 	return nil
 }
 
-type SexoEnumeration string
+type GenderEnumeration string
 
 const (
 	Male      = "Male"
@@ -70,14 +70,14 @@ const (
 )
 
 type CustomerDto struct {
-	Name     string          `json:"name" validate:"required"`
-	Email    string          `json:"email" validate:"required,email"`
-	Password string          `json:"password" validate:"required,min=8,max=20"`
-	CPF      string          `json:"cpf" validate:"required"`
-	Phone    string          `json:"phone" validate:"required,len=11"`
-	Cep      string          `json:"cep,omitempty" validate:"len=8"`
-	Gender   SexoEnumeration `json:"gender,omitempty" validate:"oneof=Male Female Undefined"`
-	Birthday time.Time       `json:"birthday,omitempty"`
+	Name     string            `json:"name" validate:"required"`
+	Email    string            `json:"email" validate:"required,email"`
+	Password string            `json:"password" validate:"required,min=8,max=20"`
+	CPF      string            `json:"cpf" validate:"required"`
+	Phone    string            `json:"phone" validate:"required,len=11"`
+	Cep      string            `json:"cep,omitempty" validate:"len=8"`
+	Gender   GenderEnumeration `json:"gender,omitempty" validate:"oneof=Male Female Undefined"`
+	Birthday time.Time         `json:"birthday,omitempty"`
 }
 
 func (dto *CustomerDto) Validate() error {

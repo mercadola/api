@@ -29,3 +29,13 @@ func (slr *ShoppingListRepository) FindByCustomerId(ctx context.Context, custome
 	}
 	return cursor, nil
 }
+
+func (cr *ShoppingListRepository) Create(ctx context.Context, shoppingList *ShoppingList) error {
+	_, err := cr.Collection.InsertOne(ctx, shoppingList)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

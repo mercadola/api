@@ -2,6 +2,11 @@ package shoppinglist
 
 import (
 	"context"
+	"net/http"
+	"time"
+
+	"github.com/mercadola/api/pkg/exceptions"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ShoppingListService struct {
@@ -29,4 +34,25 @@ func (service *ShoppingListService) FindByCustomerId(ctx context.Context, custom
 		shoppingList = append(shoppingList, sl)
 	}
 	return &shoppingList, nil
+}
+
+func (service *ShoppingListService) Create(ctx context.Context, shoppingListDto *ShoppingListDto) (*ShoppingList, error) {
+	if err := shoppingListDto.Validate(); err != nil {
+		return nil, err
+	}
+	shoppingList := &ShoppingList{
+		ID:          primitive.NewObjectID(),
+		Name:        shoppingListDto.Name,
+		CustomerId:  shoppingListDto.CustomerId,
+		ProductsIds: shoppingListDto.ProductsIds,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	err := service.Repository.Create(ctx, shoppingList)
+	if err != nil {
+		return nil, exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
+	}
+
+	return shoppingList, nil
 }

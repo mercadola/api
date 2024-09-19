@@ -1,4 +1,16 @@
-@hostname = http://localhost:{{$dotenv PORT}}
+@hostname = http://localhost:{{$dotenv PORT}}/shopping-list
 
 ###
-GET {{hostname}}/shopping-list/05625f61-619d-4cf0-90d6-e28b3913c932 HTTP/1.1
+# @name getByCustomerId
+GET {{hostname}}/05625f61-619d-4cf0-90d6-e28b3913c932 HTTP/1.1
+
+###
+# @name Create
+POST {{hostname}} HTTP/1.1
+Content-Type: application/json
+
+{
+    "name": "minha lista 2",
+    "customer_id": "66ea103dd91965361d5e73ba",
+    "products_ids":["66ea103dd91965361d5e739c"]
+}
