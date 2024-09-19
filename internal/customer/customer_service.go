@@ -123,7 +123,7 @@ func (service *CustomerService) FindByEmail(ctx context.Context, findByEmail Fin
 	}
 
 	var customer Customer
-	result.Decode(customer)
+	result.Decode(&customer)
 
 	return &customer, nil
 }
@@ -138,7 +138,7 @@ func (service *CustomerService) FindById(ctx context.Context, id primitive.Objec
 	}
 
 	var customer Customer
-	result.Decode(customer)
+	result.Decode(&customer)
 
 	return &customer, nil
 }

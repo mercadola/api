@@ -1,12 +1,14 @@
 @hostname = http://localhost:{{$dotenv PORT}}
+@password=123456789
+@email=teste-teste@mercadola.com
 
 POST {{hostname}}/customers
 Content-Type: application/json
 
 {
     "name": "TESTE TESTE",
-    "email": "teste-teste@mercadola.com",
-    "password": "123456789",
+    "email": "{{email}}",
+    "password": "{{password}}",
     "cpf": "99999999999",
     "phone": "21997531100",
     "cep": "23031620",
@@ -20,6 +22,6 @@ POST {{hostname}}/authenticate
 Content-Type: application/json
 
 {
-    "email": "teste2@mercadola.com",
-    "password": "123456789"
+    "email": "{{email}}",
+    "password": "{{password}}"
 }
