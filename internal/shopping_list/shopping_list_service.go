@@ -3,10 +3,8 @@ package shoppinglist
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/mercadola/api/pkg/exceptions"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ShoppingListService struct {
@@ -18,6 +16,29 @@ func NewService(slr *ShoppingListRepository) *ShoppingListService {
 		Repository: *slr,
 	}
 }
+
+func (service *ShoppingListService) Create(ctx context.Context, shoppingListDto *ShoppingListCreateDto, customer_id string) (*ShoppingList, error) {
+	shoppingList := NewShoppingList(shoppingListDto.Name, customer_id, shoppingListDto.ProductsIds)
+	err := service.Repository.Create(ctx, shoppingList)
+	if err != nil {
+		return nil, exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
+	}
+
+	return shoppingList, nil
+}
+func (service *ShoppingListService) UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) error {
+	cursor, err := service.Repository.FindById(ctx, customer_id, shopping_list_id)
+	if err != nil {
+		return err
+	}
+	var sl ShoppingList
+	if err = cursor.Decode(&sl); err != nil {
+		return err
+	}
+	return nil
+
+}
+
 func (service *ShoppingListService) FindByCustomerId(ctx context.Context, customer_id string) (*[]ShoppingList, error) {
 	cursor, err := service.Repository.FindByCustomerId(ctx, customer_id)
 	if err != nil {
@@ -36,23 +57,11 @@ func (service *ShoppingListService) FindByCustomerId(ctx context.Context, custom
 	return &shoppingList, nil
 }
 
-func (service *ShoppingListService) Create(ctx context.Context, shoppingListDto *ShoppingListDto) (*ShoppingList, error) {
-	if err := shoppingListDto.Validate(); err != nil {
-		return nil, err
-	}
-	shoppingList := &ShoppingList{
-		ID:          primitive.NewObjectID(),
-		Name:        shoppingListDto.Name,
-		CustomerId:  shoppingListDto.CustomerId,
-		ProductsIds: shoppingListDto.ProductsIds,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-	}
-
-	err := service.Repository.Create(ctx, shoppingList)
+func (service *ShoppingListService) Delete(ctx context.Context, customer_id, shopping_list_id string) error {
+	err := service.Repository.Delete(ctx, customer_id, shopping_list_id)
 	if err != nil {
-		return nil, exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
+		return err
 	}
+	return nil
 
-	return shoppingList, nil
 }

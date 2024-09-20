@@ -17,7 +17,7 @@ Content-Type: application/json
 }
 
 ###
-
+# @name login
 POST {{hostname}}/authenticate
 Content-Type: application/json
 
