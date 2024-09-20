@@ -22,10 +22,6 @@ func NewService(cr *CustomerRepository) *CustomerService {
 }
 
 func (service *CustomerService) Authenticate(ctx context.Context, authenticateInput AuthenticateInput) (*Customer, error) {
-	if err := authenticateInput.Validate(); err != nil {
-		return nil, err
-	}
-
 	finddedCustomer, err := service.FindByEmail(ctx, FindByEmailInput{Email: authenticateInput.Email})
 
 	if err != nil {
@@ -40,10 +36,6 @@ func (service *CustomerService) Authenticate(ctx context.Context, authenticateIn
 }
 
 func (service *CustomerService) Create(ctx context.Context, customerDto *CustomerDto) (*Customer, error) {
-	if err := customerDto.Validate(); err != nil {
-		return nil, err
-	}
-
 	finddedCustomers, _ := service.Find(ctx, findQueryParams{Email: customerDto.Email, CPF: customerDto.CPF})
 
 	if finddedCustomers != nil && len(*finddedCustomers) > 0 {
@@ -93,10 +85,6 @@ func (service *CustomerService) Delete(ctx context.Context, id primitive.ObjectI
 }
 
 func (service *CustomerService) Find(ctx context.Context, query findQueryParams) (*[]Customer, error) {
-	if err := query.Validate(); err != nil {
-		return nil, err
-	}
-
 	cursor, err := service.Repository.Find(ctx, query)
 	if err != nil {
 		return nil, err
@@ -115,9 +103,6 @@ func (service *CustomerService) Find(ctx context.Context, query findQueryParams)
 }
 
 func (service *CustomerService) FindByEmail(ctx context.Context, findByEmail FindByEmailInput) (*Customer, error) {
-	if err := findByEmail.Validate(); err != nil {
-		return nil, err
-	}
 	result := service.Repository.FindByEmail(ctx, findByEmail.Email)
 	if result.Err() != nil {
 		if result.Err() == mongo.ErrNoDocuments {
@@ -165,10 +150,6 @@ func (service *CustomerService) PositivateCustomer(ctx context.Context, id primi
 }
 
 func (service *CustomerService) Update(ctx context.Context, id primitive.ObjectID, customerDto *CustomerDto) error {
-	if err := customerDto.Validate(); err != nil {
-		return err
-	}
-
 	customer := Customer{
 		ID:        id,
 		Name:      customerDto.Name,
