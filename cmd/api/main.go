@@ -78,7 +78,7 @@ func main() {
 	productRepository := product.NewRepository(mongoClient, cfg, logger)
 	productService := product.NewService(productRepository)
 	productHandler := product.NewHandler(productService)
-	productHandler.RegisterRoutes(r)
+	productHandler.RegisterRoutes(r, cfg.TokenAuth)
 
 	customerRepository := customer.NewCustomerRepository(mongoClient, cfg, logger)
 	customerService := customer.NewService(customerRepository)

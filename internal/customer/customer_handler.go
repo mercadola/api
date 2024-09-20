@@ -26,6 +26,8 @@ func (h *CustomerHandler) RegisterRoutes(r *chi.Mux) {
 	r.Post("/authenticate", h.Authenticate)
 	r.Route("/customers", func(r chi.Router) {
 		r.Post("/", h.Create)
+		r.Patch("/{id}/positivate", h.PositivateCustomer)
+		r.Put("/{id}", h.Update)
 		r.Get("/", h.Find)
 		r.Get("/{id}", h.FindById)
 		r.Delete("/{id}", h.Delete)
@@ -50,14 +52,7 @@ func (h *CustomerHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 
 	customer, err := h.Service.Authenticate(r.Context(), authenticateInput)
 	if err != nil {
-		if err, ok := err.(*exceptions.AppException); ok {
-			w.WriteHeader(err.StatusCode)
-			json.NewEncoder(w).Encode(err)
-			return
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		error := exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
-		json.NewEncoder(w).Encode(error)
+		handleCustomError(w, err)
 		return
 	}
 
@@ -87,14 +82,7 @@ func (h *CustomerHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	customer, err := h.Service.Create(r.Context(), &customerDto)
 	if err != nil {
-		if err, ok := err.(*exceptions.AppException); ok {
-			w.WriteHeader(err.StatusCode)
-			json.NewEncoder(w).Encode(err)
-			return
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		error := exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
-		json.NewEncoder(w).Encode(error)
+		handleCustomError(w, err)
 		return
 	}
 
@@ -106,6 +94,12 @@ func (h *CustomerHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	id := chi.URLParam(r, "id")
+	if id == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		error := exceptions.NewAppException(http.StatusBadRequest, "Invalid id", nil)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -116,14 +110,7 @@ func (h *CustomerHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	err = h.Service.Delete(r.Context(), objectId)
 	if err != nil {
-		if err, ok := err.(exceptions.AppException); ok {
-			w.WriteHeader(err.StatusCode)
-			json.NewEncoder(w).Encode(err)
-			return
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		error := exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
-		json.NewEncoder(w).Encode(error)
+		handleCustomError(w, err)
 		return
 	}
 
@@ -138,14 +125,7 @@ func (handler *CustomerHandler) Find(w http.ResponseWriter, r *http.Request) {
 	query.CPF = r.URL.Query().Get("cpf")
 	resp, err := handler.Service.Find(r.Context(), query)
 	if err != nil {
-		if err, ok := err.(exceptions.AppException); ok {
-			w.WriteHeader(err.StatusCode)
-			json.NewEncoder(w).Encode(err)
-			return
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		error := exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
-		json.NewEncoder(w).Encode(error)
+		handleCustomError(w, err)
 		return
 	}
 
@@ -157,7 +137,65 @@ func (handler *CustomerHandler) FindById(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 
 	id := chi.URLParam(r, "id")
-	objectId, err := primitive.ObjectIDFromHex(id)
+	if id == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		error := exceptions.NewAppException(http.StatusBadRequest, "Invalid id", nil)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+	objectId, err := buildObjectId(id)
+	if err != nil {
+		appError, _ := err.(*exceptions.AppException)
+		w.WriteHeader(appError.StatusCode)
+		json.NewEncoder(w).Encode(appError)
+		return
+	}
+
+	customer, err := handler.Service.FindById(r.Context(), objectId)
+	if err != nil {
+		handleCustomError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(customer)
+}
+
+func (h *CustomerHandler) PositivateCustomer(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id := chi.URLParam(r, "id")
+	objectId, err := buildObjectId(id)
+	if err != nil {
+		appError, _ := err.(*exceptions.AppException)
+		w.WriteHeader(appError.StatusCode)
+		json.NewEncoder(w).Encode(appError)
+		return
+	}
+
+	err = h.Service.PositivateCustomer(r.Context(), objectId)
+	if err != nil {
+		handleCustomError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id := chi.URLParam(r, "id")
+	objectId, err := buildObjectId(id)
+	if err != nil {
+		appError, _ := err.(*exceptions.AppException)
+		w.WriteHeader(appError.StatusCode)
+		json.NewEncoder(w).Encode(appError)
+		return
+	}
+
+	var customerDto CustomerDto
+
+	err = json.NewDecoder(r.Body).Decode(&customerDto)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		error := exceptions.NewAppException(http.StatusBadRequest, fmt.Sprintf("Error trying decode request => %s", err.Error()), nil)
@@ -165,19 +203,31 @@ func (handler *CustomerHandler) FindById(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	customer, err := handler.Service.FindById(r.Context(), objectId)
+	err = h.Service.Update(r.Context(), objectId, &customerDto)
 	if err != nil {
-		if err, ok := err.(exceptions.AppException); ok {
-			w.WriteHeader(err.StatusCode)
-			json.NewEncoder(w).Encode(err)
-			return
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		error := exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
-		json.NewEncoder(w).Encode(error)
+		handleCustomError(w, err)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(customer)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func buildObjectId(id string) (primitive.ObjectID, error) {
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return primitive.NilObjectID, exceptions.NewAppException(http.StatusBadRequest, fmt.Sprintf("Error trying decode request => %s", err.Error()), nil)
+	}
+	return objectId, nil
+}
+
+func handleCustomError(w http.ResponseWriter, err error) {
+	if err, ok := err.(*exceptions.AppException); ok {
+		w.WriteHeader(err.StatusCode)
+		json.NewEncoder(w).Encode(err)
+		return
+	}
+	w.WriteHeader(http.StatusInternalServerError)
+	error := exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
+	json.NewEncoder(w).Encode(error)
+	return
 }

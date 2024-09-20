@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/jwtauth"
 	"github.com/mercadola/api/pkg/exceptions"
 )
 
@@ -18,8 +19,10 @@ func NewHandler(ps *ProductService) *ProductHandler {
 	}
 }
 
-func (h *ProductHandler) RegisterRoutes(r *chi.Mux) {
+func (h *ProductHandler) RegisterRoutes(r *chi.Mux, tokenAuth *jwtauth.JWTAuth) {
 	r.Route("/products", func(r chi.Router) {
+		r.Use(jwtauth.Verifier(tokenAuth))
+		r.Use(jwtauth.Authenticator)
 		r.Get("/", h.Find)
 	})
 }

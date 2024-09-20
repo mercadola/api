@@ -78,13 +78,17 @@ func (service *CustomerService) Create(ctx context.Context, customerDto *Custome
 }
 
 func (service *CustomerService) Delete(ctx context.Context, id primitive.ObjectID) error {
-	err := service.Repository.Delete(ctx, id)
+	customer, err := service.FindById(ctx, id)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return exceptions.NewAppException(http.StatusNotFound, "Customer not found", nil)
-		}
-		return exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
+		return err
 	}
+
+	customer.CPF = ""
+	customer.Active = false
+	customer.UpdatedAt = time.Now()
+
+	err = service.Repository.Update(ctx, *customer)
+
 	return nil
 }
 
@@ -143,7 +147,24 @@ func (service *CustomerService) FindById(ctx context.Context, id primitive.Objec
 	return &customer, nil
 }
 
-func (service *CustomerService) Update(ctx context.Context, id primitive.ObjectID, customerDto CustomerDto) error {
+func (service *CustomerService) PositivateCustomer(ctx context.Context, id primitive.ObjectID) error {
+	customer, err := service.FindById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	customer.Active = true
+	customer.UpdatedAt = time.Now()
+
+	err = service.Repository.Update(ctx, *customer)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (service *CustomerService) Update(ctx context.Context, id primitive.ObjectID, customerDto *CustomerDto) error {
 	if err := customerDto.Validate(); err != nil {
 		return err
 	}

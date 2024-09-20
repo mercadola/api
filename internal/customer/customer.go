@@ -35,12 +35,13 @@ type Customer struct {
 	ID        primitive.ObjectID `json:"id" bson:"_id"`
 	Name      string             `json:"name" bson:"name"`
 	Email     string             `json:"email" bson:"email"`
-	Password  string             `json:"password" bson:"password"`
+	Password  string             `json:"-" bson:"password"`
 	CPF       string             `json:"cpf" bson:"cpf"`
 	Phone     string             `json:"phone" bson:"phone"`
 	Cep       string             `json:"cep" bson:"cep"`
-	CreatedAt time.Time          `json:"create_at" bson:"create_at"`
-	UpdatedAt time.Time          `json:"update_at" bson:"update_at"`
+	Active    bool               `json:"active" bson:"active,default=true"`
+	CreatedAt time.Time          `json:"create_at" bson:"created_at"`
+	UpdatedAt time.Time          `json:"update_at" bson:"updated_at"`
 }
 
 func (c *Customer) validatePassword(password string) bool {
@@ -73,7 +74,7 @@ type CustomerDto struct {
 	Name     string            `json:"name" validate:"required"`
 	Email    string            `json:"email" validate:"required,email"`
 	Password string            `json:"password" validate:"required,min=8,max=20"`
-	CPF      string            `json:"cpf" validate:"required"`
+	CPF      string            `json:"cpf"`
 	Phone    string            `json:"phone" validate:"required,len=11"`
 	Cep      string            `json:"cep,omitempty" validate:"len=8"`
 	Gender   GenderEnumeration `json:"gender,omitempty" validate:"oneof=Male Female Undefined"`

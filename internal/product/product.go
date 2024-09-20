@@ -33,8 +33,6 @@ type Product struct {
 	Length       float64     `json:"length"`
 	NetWeight    interface{} `json:"net_weight"`
 	GrossWeight  interface{} `json:"gross_weight"`
-	CreatedAt    time.Time   `json:"created_at"`
-	UpdatedAt    time.Time   `json:"updated_at"`
 	ReleaseDate  interface{} `json:"release_date"`
 	Price        interface{} `json:"price"`
 	AvgPrice     interface{} `json:"avg_price"`
@@ -45,4 +43,6 @@ type Product struct {
 	BarcodeImage string      `json:"barcode_image"`
 	Gpc          Gpc         `json:"gpc"`
 	Ncm          Ncm         `json:"ncm"`
+	CreatedAt    time.Time   `json:"created_at"`
+	UpdatedAt    time.Time   `json:"updated_at"`
 }

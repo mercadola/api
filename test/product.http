@@ -2,6 +2,7 @@
 ###
 # @name list
 GET {{hostname}}/products HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjY4NDc3MzYsInN1YiI6Ik9iamVjdElEKFwiNjZlZDhjZTY4ZjNkNjFmMTA3MmNiMDRhXCIpIn0.80aTpx5KhuA6FFu2aZQq-zmMxG0Qwa9I2z_BgUyoEpc
 
 ###
 # @name getByEan
