@@ -62,7 +62,7 @@ func (h *CustomerHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, token, _ := jwtAuth.Encode(map[string]interface{}{
-		"sub": customer.ID.String(),
+		"sub": customer.ID.Hex(),
 		"exp": time.Now().Add(time.Second * time.Duration(jwtExpiresIn)).Unix(),
 	})
 

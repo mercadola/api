@@ -3,8 +3,6 @@ package shoppinglist
 import (
 	"time"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/mercadola/api/pkg/exceptions"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -17,12 +15,22 @@ type ShoppingList struct {
 	UpdatedAt   time.Time          `json:"updated_at" bson:"updated_at"`
 }
 
-type ShoppingListDto struct {
+func NewShoppingList(name, customer_id string, productsIds []string) *ShoppingList {
+	return &ShoppingList{
+		ID:          primitive.NewObjectID(),
+		Name:        name,
+		CustomerId:  customer_id,
+		ProductsIds: productsIds,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+}
+
+type ShoppingListCreateDto struct {
 	Name        string   `json:"name" validate:"required"`
-	CustomerId  string   `json:"customer_id" validate:"required"`
 	ProductsIds []string `json:"products_ids"`
 }
 
-func (dto *ShoppingListDto) Validate() error {
-	return exceptions.ValidateException(validator.New(), dto)
+type ShoppingListUpdateDto struct {
+	Name string `json:"name" validate:"required"`
 }

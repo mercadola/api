@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/jwtauth"
+	"github.com/go-playground/validator/v10"
 	"github.com/mercadola/api/pkg/exceptions"
 )
 
@@ -23,15 +24,77 @@ func NewHandler(ps *ShoppingListService) *ShoppingListHandler {
 func (h *ShoppingListHandler) RegisterRoutes(r *chi.Mux, tokenAuth *jwtauth.JWTAuth) {
 	r.Route("/shopping-list", func(r chi.Router) {
 		r.Use(jwtauth.Verifier(tokenAuth))
+		r.Use(jwtauth.Authenticator)
 		r.Post("/", h.Create)
-		r.Get("/{customer_id}", h.FindByCustomerId)
+		r.Get("/", h.FindByCustomer)
+		r.Delete("/{shopping_list_id}", h.Delete)
+		r.Patch("/{shopping_list_id}", h.UpdateName)
 	})
 }
 
-func (handler *ShoppingListHandler) FindByCustomerId(w http.ResponseWriter, r *http.Request) {
+func (h *ShoppingListHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	customer_id := chi.URLParam(r, "customer_id")
-	resp, err := handler.Service.FindByCustomerId(r.Context(), customer_id)
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	var shoppinglistDto ShoppingListCreateDto
+
+	err := json.NewDecoder(r.Body).Decode(&shoppinglistDto)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		error := exceptions.NewAppException(http.StatusBadRequest, fmt.Sprintf("Error trying decode request => %s", err.Error()), nil)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+	if err := exceptions.ValidateException(validator.New(), shoppinglistDto); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		error := exceptions.NewAppException(http.StatusBadRequest, err.Error(), nil)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+
+	shoppingList, error := h.Service.Create(r.Context(), &shoppinglistDto, claims["sub"].(string))
+	if error != nil {
+		w.WriteHeader(error.StatusCode)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(shoppingList)
+}
+
+func (h *ShoppingListHandler) UpdateName(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	shopping_list_id := chi.URLParam(r, "shopping_list_id")
+	var shoppinglistDto ShoppingListUpdateDto
+
+	err := json.NewDecoder(r.Body).Decode(&shoppinglistDto)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		error := exceptions.NewAppException(http.StatusBadRequest, fmt.Sprintf("Error trying decode request => %s", err.Error()), nil)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+	if err := exceptions.ValidateException(validator.New(), shoppinglistDto); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		error := exceptions.NewAppException(http.StatusBadRequest, err.Error(), nil)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+	error := h.Service.UpdateName(r.Context(), shoppinglistDto.Name, claims["sub"].(string), shopping_list_id)
+	if error != nil {
+		w.WriteHeader(error.StatusCode)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (handler *ShoppingListHandler) FindByCustomer(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	resp, err := handler.Service.FindByCustomerId(r.Context(), claims["sub"].(string))
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		error := exceptions.NewAppException(http.StatusNotFound, err.Error(), nil)
@@ -43,32 +106,17 @@ func (handler *ShoppingListHandler) FindByCustomerId(w http.ResponseWriter, r *h
 	json.NewEncoder(w).Encode(resp)
 }
 
-func (h *ShoppingListHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (handler *ShoppingListHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	var shoppinglistDto ShoppingListDto
-
-	err := json.NewDecoder(r.Body).Decode(&shoppinglistDto)
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	shopping_list_id := chi.URLParam(r, "shopping_list_id")
+	err := handler.Service.Delete(r.Context(), claims["sub"].(string), shopping_list_id)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		error := exceptions.NewAppException(http.StatusBadRequest, fmt.Sprintf("Error trying decode request => %s", err.Error()), nil)
+		w.WriteHeader(http.StatusNotFound)
+		error := exceptions.NewAppException(http.StatusNotFound, err.Error(), nil)
 		json.NewEncoder(w).Encode(error)
 		return
 	}
 
-	customer, err := h.Service.Create(r.Context(), &shoppinglistDto)
-	if err != nil {
-		if err, ok := err.(*exceptions.AppException); ok {
-			w.WriteHeader(err.StatusCode)
-			json.NewEncoder(w).Encode(err)
-			return
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		error := exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
-		json.NewEncoder(w).Encode(error)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(customer)
+	w.WriteHeader(http.StatusNoContent)
 }
