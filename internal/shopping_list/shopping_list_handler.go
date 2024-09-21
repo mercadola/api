@@ -51,15 +51,9 @@ func (h *ShoppingListHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shoppingList, err := h.Service.Create(r.Context(), &shoppinglistDto, claims["sub"].(string))
-	if err != nil {
-		if err, ok := err.(*exceptions.AppException); ok {
-			w.WriteHeader(err.StatusCode)
-			json.NewEncoder(w).Encode(err)
-			return
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		error := exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
+	shoppingList, error := h.Service.Create(r.Context(), &shoppinglistDto, claims["sub"].(string))
+	if error != nil {
+		w.WriteHeader(error.StatusCode)
 		json.NewEncoder(w).Encode(error)
 		return
 	}
@@ -87,15 +81,9 @@ func (h *ShoppingListHandler) UpdateName(w http.ResponseWriter, r *http.Request)
 		json.NewEncoder(w).Encode(error)
 		return
 	}
-	err = h.Service.UpdateName(r.Context(), shoppinglistDto.Name, claims["sub"].(string), shopping_list_id)
-	if err != nil {
-		if err, ok := err.(*exceptions.AppException); ok {
-			w.WriteHeader(err.StatusCode)
-			json.NewEncoder(w).Encode(err)
-			return
-		}
-		w.WriteHeader(http.StatusInternalServerError)
-		error := exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
+	error := h.Service.UpdateName(r.Context(), shoppinglistDto.Name, claims["sub"].(string), shopping_list_id)
+	if error != nil {
+		w.WriteHeader(error.StatusCode)
 		json.NewEncoder(w).Encode(error)
 		return
 	}

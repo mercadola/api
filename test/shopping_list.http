@@ -12,14 +12,9 @@ Content-Type: application/json
     "password": "{{password}}"
 }
 
-###
-@authToken = Bearer {{login.response.body.accessToken}}
-# @name getByCustomer
-GET {{hostname}}/shopping-list HTTP/1.1
-Content-Type: {{contentType}}
-Authorization: {{authToken}}
 
 ###
+@authToken = Bearer {{login.response.body.accessToken}}
 # @name Create
 POST {{hostname}}/shopping-list HTTP/1.1
 Content-Type: {{contentType}}
@@ -31,16 +26,21 @@ Authorization: {{authToken}}
 }
 
 ###
+# @name getByCustomer
+GET {{hostname}}/shopping-list HTTP/1.1
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+###
 @shopping_list_id = {{getByCustomer.response.body.0.id}}
 # @name UpdateName
-PATCH  {{hostname}}/shopping-list/66ea103dd91965361d5e73ba HTTP/1.1
+PATCH  {{hostname}}/shopping-list/{{shopping_list_id}} HTTP/1.1
 Content-Type: {{contentType}}
 Authorization: {{authToken}}
 
 {
-    "name": "minha lista 1020"
+    "name": "minha lista 10"
 }
-
 ###
 @shopping_list_id = {{getByCustomer.response.body.0.id}}
 # @name DeleteById

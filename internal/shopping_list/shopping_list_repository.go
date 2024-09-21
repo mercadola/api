@@ -30,10 +30,10 @@ func (slr *ShoppingListRepository) Create(ctx context.Context, shoppingList *Sho
 
 	return nil
 }
-func (slr *ShoppingListRepository) UpdateName(ctx context.Context, customer_id, shopping_list_id, name string) error {
+func (slr *ShoppingListRepository) UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*mongo.UpdateResult, error) {
 	objID, err := primitive.ObjectIDFromHex(shopping_list_id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	filter := bson.M{
@@ -47,11 +47,11 @@ func (slr *ShoppingListRepository) UpdateName(ctx context.Context, customer_id, 
 		},
 	}
 
-	_, err = slr.Collection.UpdateMany(ctx, filter, update)
+	result, err := slr.Collection.UpdateOne(ctx, filter, update)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return result, nil
 }
 
 func (slr *ShoppingListRepository) FindByCustomerId(ctx context.Context, customer_id string) (*mongo.Cursor, error) {
@@ -64,7 +64,7 @@ func (slr *ShoppingListRepository) FindByCustomerId(ctx context.Context, custome
 	}
 	return cursor, nil
 }
-func (slr *ShoppingListRepository) FindById(ctx context.Context, customer_id, shopping_list_id string) (*mongo.SingleResult, error) {
+func (slr *ShoppingListRepository) FindById(ctx context.Context, customer_id, shopping_list_id string) (*mongo.Cursor, error) {
 	objID, err := primitive.ObjectIDFromHex(shopping_list_id)
 	if err != nil {
 		return nil, err
@@ -73,24 +73,28 @@ func (slr *ShoppingListRepository) FindById(ctx context.Context, customer_id, sh
 		"_id":         objID,
 		"customer_id": customer_id,
 	}
-	cursor := slr.Collection.FindOne(ctx, filter)
+
+	cursor, err := slr.Collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
 	return cursor, nil
 }
 
-func (slr *ShoppingListRepository) Delete(ctx context.Context, customer_id, shopping_list_id string) error {
+func (slr *ShoppingListRepository) Delete(ctx context.Context, customer_id, shopping_list_id string) (*mongo.DeleteResult, error) {
 	objID, err := primitive.ObjectIDFromHex(shopping_list_id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	filter := bson.M{
 		"customer_id": customer_id,
 		"_id":         objID,
 	}
-	_, err = slr.Collection.DeleteOne(ctx, filter)
+	result, err := slr.Collection.DeleteOne(ctx, filter)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return result, nil
 
 }
