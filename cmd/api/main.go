@@ -75,20 +75,21 @@ func main() {
 	r.Use(middleware.WithValue("jwt", cfg.TokenAuth))
 	r.Use(middleware.WithValue("jwtExpiresIn", cfg.JWTExpiresIn))
 
-	productRepository := product.NewRepository(mongoClient, cfg, logger)
-	productService := product.NewService(productRepository)
-	productHandler := product.NewHandler(productService)
-	productHandler.RegisterRoutes(r, cfg.TokenAuth)
-
 	customerRepository := customer.NewCustomerRepository(mongoClient, cfg, logger)
 	customerService := customer.NewService(customerRepository)
 	customerHandler := customer.NewHandler(customerService)
 	customerHandler.RegisterRoutes(r)
 
-	shoppingListRepository := shoppinglist.NewRepository(mongoClient, cfg, logger)
-	shoppinglistService := shoppinglist.NewService(shoppingListRepository)
+	shoppingListRepository := shoppinglist.NewRepository(mongoClient, logger, cfg.DB, cfg.ShoppingListCollection)
+	shoppingList := &shoppinglist.ShoppingList{}
+	shoppinglistService := shoppinglist.NewService(shoppingListRepository, shoppingList)
 	shoppinglistHandler := shoppinglist.NewHandler(shoppinglistService)
 	shoppinglistHandler.RegisterRoutes(r, cfg.TokenAuth)
+
+	productRepository := product.NewRepository(mongoClient, cfg, logger)
+	productService := product.NewService(productRepository)
+	productHandler := product.NewHandler(productService)
+	productHandler.RegisterRoutes(r, cfg.TokenAuth)
 
 	fmt.Println("Starting server at port: " + cfg.Port)
 	err = http.ListenAndServe(":"+cfg.Port, r)

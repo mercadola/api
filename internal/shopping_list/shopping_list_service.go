@@ -8,17 +8,18 @@ import (
 )
 
 type ShoppingListService struct {
-	Repository ShoppingListRepository
+	Repository   ShoppingListRepositoryInterface
+	ShoppingList ShoppingListInterface
 }
 
-func NewService(slr *ShoppingListRepository) *ShoppingListService {
+func NewService(slr ShoppingListRepositoryInterface, sl ShoppingListInterface) *ShoppingListService {
 	return &ShoppingListService{
-		Repository: *slr,
-	}
+		Repository:   slr,
+		ShoppingList: sl}
 }
 
 func (service *ShoppingListService) Create(ctx context.Context, shoppingListDto *ShoppingListCreateDto, customer_id string) (*ShoppingList, *exceptions.AppException) {
-	shoppingList := NewShoppingList(shoppingListDto.Name, customer_id, shoppingListDto.ProductsIds)
+	shoppingList := service.ShoppingList.New(shoppingListDto.Name, customer_id, shoppingListDto.ProductsIds)
 	err := service.Repository.Create(ctx, shoppingList)
 	if err != nil {
 		return nil, exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
@@ -39,21 +40,11 @@ func (service *ShoppingListService) UpdateName(ctx context.Context, name, custom
 }
 
 func (service *ShoppingListService) FindByCustomerId(ctx context.Context, customer_id string) (*[]ShoppingList, *exceptions.AppException) {
-	cursor, err := service.Repository.FindByCustomerId(ctx, customer_id)
+	shoppingList, err := service.Repository.FindByCustomerId(ctx, customer_id)
 	if err != nil {
 		return nil, exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
 	}
-	defer cursor.Close(ctx)
-	shoppingList := []ShoppingList{}
-
-	for cursor.Next(ctx) {
-		var sl ShoppingList
-		if err = cursor.Decode(&sl); err != nil {
-			return nil, exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
-		}
-		shoppingList = append(shoppingList, sl)
-	}
-	return &shoppingList, nil
+	return shoppingList, nil
 }
 
 func (service *ShoppingListService) Delete(ctx context.Context, customer_id, shopping_list_id string) *exceptions.AppException {
