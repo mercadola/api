@@ -7,7 +7,6 @@ import (
 
 	"github.com/mercadola/api/internal/infrastruture/config"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -31,14 +30,9 @@ func (slr *ShoppingListRepository) Create(ctx context.Context, shoppingList *Sho
 	return nil
 }
 func (slr *ShoppingListRepository) UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*mongo.UpdateResult, error) {
-	objID, err := primitive.ObjectIDFromHex(shopping_list_id)
-	if err != nil {
-		return nil, err
-	}
-
 	filter := bson.M{
 		"customer_id": customer_id,
-		"_id":         objID,
+		"id":          shopping_list_id,
 	}
 	update := bson.M{
 		"$set": bson.M{
@@ -65,12 +59,8 @@ func (slr *ShoppingListRepository) FindByCustomerId(ctx context.Context, custome
 	return cursor, nil
 }
 func (slr *ShoppingListRepository) FindById(ctx context.Context, customer_id, shopping_list_id string) (*mongo.Cursor, error) {
-	objID, err := primitive.ObjectIDFromHex(shopping_list_id)
-	if err != nil {
-		return nil, err
-	}
 	filter := bson.M{
-		"_id":         objID,
+		"id":          shopping_list_id,
 		"customer_id": customer_id,
 	}
 
@@ -82,14 +72,9 @@ func (slr *ShoppingListRepository) FindById(ctx context.Context, customer_id, sh
 }
 
 func (slr *ShoppingListRepository) Delete(ctx context.Context, customer_id, shopping_list_id string) (*mongo.DeleteResult, error) {
-	objID, err := primitive.ObjectIDFromHex(shopping_list_id)
-	if err != nil {
-		return nil, err
-	}
-
 	filter := bson.M{
 		"customer_id": customer_id,
-		"_id":         objID,
+		"id":          shopping_list_id,
 	}
 	result, err := slr.Collection.DeleteOne(ctx, filter)
 	if err != nil {
