@@ -38,6 +38,16 @@ func (service *ShoppingListService) UpdateName(ctx context.Context, name, custom
 	return nil
 
 }
+func (service *ShoppingListService) UpdateProducts(ctx context.Context, customer_id, shopping_list_id string, products []string) *exceptions.AppException {
+	result, err := service.Repository.UpdateProducts(ctx, customer_id, shopping_list_id, products)
+	if err != nil {
+		return exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
+	}
+	if result.ModifiedCount == 0 {
+		return exceptions.NewAppException(http.StatusNotFound, "no documents in result", nil)
+	}
+	return nil
+}
 
 func (service *ShoppingListService) FindByCustomerId(ctx context.Context, customer_id string) (*[]ShoppingList, *exceptions.AppException) {
 	shoppingList, err := service.Repository.FindByCustomerId(ctx, customer_id)

@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type UpdateNameResult struct {
+type UpdateResult struct {
 	ModifiedCount int64 `json:"modified_count"`
 }
 
@@ -20,7 +20,8 @@ type DeleteResult struct {
 
 type ShoppingListRepositoryInterface interface {
 	Create(ctx context.Context, shoppingList *ShoppingList) error
-	UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*UpdateNameResult, error)
+	UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*UpdateResult, error)
+	UpdateProducts(ctx context.Context, customer_id, shopping_list_id string, products []string) (*UpdateResult, error)
 	FindByCustomerId(ctx context.Context, customer_id string) (*[]ShoppingList, error)
 	Delete(ctx context.Context, customer_id, shopping_list_id string) (*DeleteResult, error)
 }
@@ -44,7 +45,7 @@ func (slr *ShoppingListRepository) Create(ctx context.Context, shoppingList *Sho
 
 	return nil
 }
-func (slr *ShoppingListRepository) UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*UpdateNameResult, error) {
+func (slr *ShoppingListRepository) UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*UpdateResult, error) {
 	filter := bson.M{
 		"customer_id": customer_id,
 		"id":          shopping_list_id,
@@ -60,7 +61,26 @@ func (slr *ShoppingListRepository) UpdateName(ctx context.Context, name, custome
 	if err != nil {
 		return nil, err
 	}
-	return &UpdateNameResult{ModifiedCount: result.ModifiedCount}, nil
+	return &UpdateResult{ModifiedCount: result.ModifiedCount}, nil
+}
+
+func (slr *ShoppingListRepository) UpdateProducts(ctx context.Context, customer_id, shopping_list_id string, products []string) (*UpdateResult, error) {
+	filter := bson.M{
+		"customer_id": customer_id,
+		"id":          shopping_list_id,
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"products_ids": products,
+			"updated_at":   time.Now(),
+		},
+	}
+
+	result, err := slr.Collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+	return &UpdateResult{ModifiedCount: result.ModifiedCount}, nil
 }
 
 func (slr *ShoppingListRepository) FindByCustomerId(ctx context.Context, customer_id string) (*[]ShoppingList, error) {

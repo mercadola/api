@@ -24,9 +24,14 @@ func (m *ShoppingListRepositoryMock) Create(ctx context.Context, shoppingList *S
 	return args.Error(0)
 }
 
-func (m *ShoppingListRepositoryMock) UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*UpdateNameResult, error) {
+func (m *ShoppingListRepositoryMock) UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*UpdateResult, error) {
 	args := m.Called(ctx, name, customer_id, shopping_list_id)
-	return args.Get(0).(*UpdateNameResult), args.Error(1)
+	return args.Get(0).(*UpdateResult), args.Error(1)
+}
+
+func (m *ShoppingListRepositoryMock) UpdateProducts(ctx context.Context, customer_id, shopping_list_id string, products []string) (*UpdateResult, error) {
+	args := m.Called(ctx, customer_id, shopping_list_id, products)
+	return args.Get(0).(*UpdateResult), args.Error(1)
 }
 
 func (m *ShoppingListRepositoryMock) FindByCustomerId(ctx context.Context, customer_id string) (*[]ShoppingList, error) {
