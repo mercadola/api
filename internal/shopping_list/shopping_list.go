@@ -34,6 +34,10 @@ type ShoppingListCreateDto struct {
 	ProductsIds []string `json:"products_ids"`
 }
 
-type ShoppingListUpdateDto struct {
+type ShoppingListUpdateNameDto struct {
 	Name string `json:"name" validate:"required"`
+}
+
+type ShoppingListUpdateProductsDto struct {
+	ProductsIds []string `json:"products_ids" validate:"required"`
 }

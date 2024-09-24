@@ -41,6 +41,17 @@ Authorization: {{authToken}}
 {
     "name": "minha lista 10"
 }
+
+###
+@shopping_list_id = {{getByCustomer.response.body.0.id}}
+# @name AddProducts
+PATCH  {{hostname}}/shopping-list/{{shopping_list_id}}/products HTTP/1.1
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+     "products_ids":["ef195009-b2f0-4aeb-b12f-14e4257c1362", "037f85db-b46b-4565-9314-c110e3037362"]
+}
 ###
 @shopping_list_id = {{getByCustomer.response.body.0.id}}
 # @name DeleteById

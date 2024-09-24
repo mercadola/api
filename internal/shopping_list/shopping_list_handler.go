@@ -29,6 +29,7 @@ func (h *ShoppingListHandler) RegisterRoutes(r *chi.Mux, tokenAuth *jwtauth.JWTA
 		r.Get("/", h.FindByCustomer)
 		r.Delete("/{shopping_list_id}", h.Delete)
 		r.Patch("/{shopping_list_id}", h.UpdateName)
+		r.Patch("/{shopping_list_id}/products", h.UpdateProducts)
 	})
 }
 
@@ -66,7 +67,7 @@ func (h *ShoppingListHandler) UpdateName(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	_, claims, _ := jwtauth.FromContext(r.Context())
 	shopping_list_id := chi.URLParam(r, "shopping_list_id")
-	var shoppinglistDto ShoppingListUpdateDto
+	var shoppinglistDto ShoppingListUpdateNameDto
 
 	err := json.NewDecoder(r.Body).Decode(&shoppinglistDto)
 	if err != nil {
@@ -82,6 +83,34 @@ func (h *ShoppingListHandler) UpdateName(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	error := h.Service.UpdateName(r.Context(), shoppinglistDto.Name, claims["sub"].(string), shopping_list_id)
+	if error != nil {
+		w.WriteHeader(error.StatusCode)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+func (h *ShoppingListHandler) UpdateProducts(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	_, claims, _ := jwtauth.FromContext(r.Context())
+	shopping_list_id := chi.URLParam(r, "shopping_list_id")
+	var shoppinglistDto ShoppingListUpdateProductsDto
+
+	err := json.NewDecoder(r.Body).Decode(&shoppinglistDto)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		error := exceptions.NewAppException(http.StatusBadRequest, fmt.Sprintf("Error trying decode request => %s", err.Error()), nil)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+	if err := exceptions.ValidateException(validator.New(), shoppinglistDto); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		error := exceptions.NewAppException(http.StatusBadRequest, err.Error(), nil)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+	error := h.Service.UpdateProducts(r.Context(), claims["sub"].(string), shopping_list_id, shoppinglistDto.ProductsIds)
 	if error != nil {
 		w.WriteHeader(error.StatusCode)
 		json.NewEncoder(w).Encode(error)
