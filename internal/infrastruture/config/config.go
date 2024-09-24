@@ -23,6 +23,8 @@ type Configuration struct {
 	ENV          string `mapstructure:"ENV"`
 	JWTSecret    string `mapstructure:"JWT_SECRET"`
 	JWTExpiresIn int    `mapstructure:"JWT_EXPIRES_IN"`
+	CosmoToken   string `mapstructure:"COSMO_TOKEN"`
+	CosmoUrl     string `mapstructure:"COSMO_URL"`
 }
 
 var cfg *Configuration

@@ -20,12 +20,13 @@ type ShoppingList struct {
 }
 
 func (sl *ShoppingList) New(name, customer_id string, productsIds []string) *ShoppingList {
+	now := time.Now()
 	sl.ID = uuid.New().String()
 	sl.Name = name
 	sl.CustomerId = customer_id
 	sl.ProductsIds = productsIds
-	sl.CreatedAt = time.Now()
-	sl.UpdatedAt = time.Now()
+	sl.CreatedAt = now
+	sl.UpdatedAt = now
 	return sl
 }
 

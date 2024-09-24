@@ -2,31 +2,54 @@ package product
 
 import (
 	"context"
+	"net/http"
+
+	"github.com/mercadola/api/pkg/exceptions"
 )
 
 type ProductService struct {
-	Repository ProductRepository
+	Repository ProductRepositoryInterface
 }
 
-func NewService(pr *ProductRepository) *ProductService {
+func NewService(pr ProductRepositoryInterface) *ProductService {
 	return &ProductService{
-		Repository: *pr,
+		Repository: pr,
 	}
 }
-func (service *ProductService) Find(ctx context.Context, query FindProductQueryParams) (*[]Product, error) {
-	cursor, err := service.Repository.Find(ctx, query)
+func (service *ProductService) Find(ctx context.Context, ean, ncm string) (*[]Product, *exceptions.AppException) {
+	products, err := service.Repository.Find(ctx, ean, ncm)
 	if err != nil {
-		return nil, err
+		return nil, exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
 	}
-	defer cursor.Close(context.TODO())
-	products := []Product{}
 
-	for cursor.Next(context.TODO()) {
-		var p Product
-		if err = cursor.Decode(&p); err != nil {
-			return nil, err
-		}
-		products = append(products, p)
+	return products, nil
+}
+
+func (service *ProductService) FindById(ctx context.Context, id string) (*Product, *exceptions.AppException) {
+	product, err := service.Repository.FindById(ctx, id)
+	if err != nil {
+		return nil, exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
 	}
-	return &products, nil
+	if product == nil {
+		return nil, exceptions.NewAppException(http.StatusNotFound, "Nenhum documento encontrado", nil)
+	}
+
+	return product, nil
+}
+
+func (service *ProductService) CreateByEan(ctx context.Context, ean string) (*Product, *exceptions.AppException) {
+	products, err := service.Repository.Find(ctx, ean, "")
+	if err != nil {
+		return nil, exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
+	}
+	if len(*products) > 0 {
+		return nil, exceptions.NewAppException(http.StatusConflict, "Produto já cadastrado", nil)
+	}
+	product, err := GetCosmosProductByEan(ean)
+	if err != nil {
+		return nil, exceptions.NewAppException(http.StatusInternalServerError, err.Error(), nil)
+	}
+	service.Repository.Create(ctx, product)
+
+	return nil, nil
 }

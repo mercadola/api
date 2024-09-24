@@ -15,6 +15,12 @@ type FindProductQueryParams struct {
 	Ncm string
 }
 
+type ProductRepositoryInterface interface {
+	Create(ctx context.Context, product *Product) error
+	Find(ctx context.Context, ean, ncm string) (*[]Product, error)
+	FindById(ctx context.Context, id string) (*Product, error)
+}
+
 type ProductRepository struct {
 	Collection *mongo.Collection
 	Logger     *slog.Logger
@@ -25,20 +31,55 @@ func NewRepository(client *mongo.Client, cfg *config.Configuration, logger *slog
 	return &ProductRepository{Collection: collection, Logger: logger}
 }
 
-func (pr *ProductRepository) Find(ctx context.Context, query FindProductQueryParams) (*mongo.Cursor, error) {
-	filter := bson.M{}
+func (pr *ProductRepository) Create(ctx context.Context, product *Product) error {
+	_, err := pr.Collection.InsertOne(ctx, product)
 
-	if query.Ean != "" {
-		ean, _ := strconv.Atoi(query.Ean)
-		filter["gtin"] = bson.M{"$eq": ean}
+	if err != nil {
+		return err
 	}
 
-	if query.Ncm != "" {
-		filter["ncm.code"] = bson.M{"$eq": query.Ncm}
+	return nil
+}
+
+func (pr *ProductRepository) Find(ctx context.Context, ean, ncm string) (*[]Product, error) {
+	filter := bson.M{}
+
+	if ean != "" {
+		ean, _ := strconv.Atoi(ean)
+		filter["ean"] = bson.M{"$eq": ean}
+	}
+
+	if ncm != "" {
+		filter["ncm"] = bson.M{"$eq": ncm}
 	}
 	cursor, err := pr.Collection.Find(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
-	return cursor, nil
+	defer cursor.Close(context.TODO())
+	products := []Product{}
+
+	for cursor.Next(context.TODO()) {
+		var p Product
+		if err = cursor.Decode(&p); err != nil {
+			return nil, err
+		}
+		products = append(products, p)
+	}
+	return &products, nil
+}
+func (pr *ProductRepository) FindById(ctx context.Context, id string) (*Product, error) {
+	filter := bson.M{
+		"id": id,
+	}
+	cursor := pr.Collection.FindOne(ctx, filter)
+	var product Product
+	if err := cursor.Decode(&product); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		} else {
+			return nil, err
+		}
+	}
+	return &product, nil
 }

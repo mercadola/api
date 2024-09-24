@@ -1,13 +1,52 @@
 @hostname = http://localhost:{{$dotenv PORT}}
+@contentType = application/json
+@password={{$dotenv PASSWORD}}
+@email={{$dotenv EMAIL}}
+
 ###
-# @name list
+# @name login
+POST {{hostname}}/authenticate
+Content-Type: {{contentType}}
+
+{
+    "email": "{{email}}",
+    "password": "{{password}}"
+}
+
+###
+# @name CreateByEan
+POST {{hostname}}/products/ean
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+{
+    "ean": "7896183201029"
+}
+
+###
+@authToken = Bearer {{login.response.body.accessToken}}
+# @name getList
 GET {{hostname}}/products HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjY4NDc3MzYsInN1YiI6Ik9iamVjdElEKFwiNjZlZDhjZTY4ZjNkNjFmMTA3MmNiMDRhXCIpIn0.80aTpx5KhuA6FFu2aZQq-zmMxG0Qwa9I2z_BgUyoEpc
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
 
 ###
+@ean = {{getList.response.body.0.ean}}
 # @name getByEan
-GET {{hostname}}/products?ean=7898204730013 HTTP/1.1
+GET {{hostname}}/products?ean={{ean}} HTTP/1.1
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
 
 ###
+@ncm = {{getList.response.body.0.ncm}}
 # @name getByNcm
-GET {{hostname}}/products?ncm=17019900 HTTP/1.1
+GET {{hostname}}/products?ncm={{ncm}} HTTP/1.1
+Content-Type: {{contentType}}
+Authorization: {{authToken}}
+
+###
+@id = {{getList.response.body.0.id}}
+# @name getById
+GET {{hostname}}/products/{{id}} HTTP/1.1
+Content-Type: {{contentType}}
+Authorization: {{authToken}}

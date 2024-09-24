@@ -1,7 +1,10 @@
-@hostname = http://localhost:{{$dotenv PORT}}
-@password=123456789
-@email=teste-teste@mercadola.com
+# @hostname = http://localhost:{{$dotenv PORT}}
+@hostname = https://api-frzf.onrender.com
+@password={{$dotenv PASSWORD}}
+@email={{$dotenv EMAIL}}
 
+###
+# @name Create
 POST {{hostname}}/customers
 Content-Type: application/json
 
