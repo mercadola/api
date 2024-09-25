@@ -76,7 +76,8 @@ func main() {
 	r.Use(middleware.WithValue("jwtExpiresIn", cfg.JWTExpiresIn))
 
 	customerRepository := customer.NewCustomerRepository(mongoClient, cfg, logger)
-	customerService := customer.NewService(customerRepository)
+	customerEntity := &customer.Customer{}
+	customerService := customer.NewService(customerRepository, logger, customerEntity)
 	customerHandler := customer.NewHandler(customerService)
 	customerHandler.RegisterRoutes(r)
 
@@ -87,7 +88,7 @@ func main() {
 	shoppinglistHandler.RegisterRoutes(r, cfg.TokenAuth)
 
 	productRepository := product.NewRepository(mongoClient, cfg, logger)
-	productService := product.NewService(productRepository)
+	productService := product.NewService(productRepository, logger)
 	productHandler := product.NewHandler(productService)
 	productHandler.RegisterRoutes(r, cfg.TokenAuth)
 

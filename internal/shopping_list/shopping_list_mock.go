@@ -3,6 +3,7 @@ package shoppinglist
 import (
 	"context"
 
+	"github.com/mercadola/api/pkg/utils"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -24,9 +25,9 @@ func (m *ShoppingListRepositoryMock) Create(ctx context.Context, shoppingList *S
 	return args.Error(0)
 }
 
-func (m *ShoppingListRepositoryMock) UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*UpdateNameResult, error) {
+func (m *ShoppingListRepositoryMock) UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*utils.UpdateResult, error) {
 	args := m.Called(ctx, name, customer_id, shopping_list_id)
-	return args.Get(0).(*UpdateNameResult), args.Error(1)
+	return args.Get(0).(*utils.UpdateResult), args.Error(1)
 }
 
 func (m *ShoppingListRepositoryMock) FindByCustomerId(ctx context.Context, customer_id string) (*[]ShoppingList, error) {
@@ -34,7 +35,7 @@ func (m *ShoppingListRepositoryMock) FindByCustomerId(ctx context.Context, custo
 	return args.Get(0).(*[]ShoppingList), args.Error(1)
 }
 
-func (m *ShoppingListRepositoryMock) Delete(ctx context.Context, customer_id, shopping_list_id string) (*DeleteResult, error) {
+func (m *ShoppingListRepositoryMock) Delete(ctx context.Context, customer_id, shopping_list_id string) (*utils.DeleteResult, error) {
 	args := m.Called(ctx, customer_id, shopping_list_id)
-	return args.Get(0).(*DeleteResult), args.Error(1)
+	return args.Get(0).(*utils.DeleteResult), args.Error(1)
 }

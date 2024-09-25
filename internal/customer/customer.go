@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/mercadola/api/pkg/exceptions"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,17 +31,46 @@ func (dto *FindByEmailInput) Validate() error {
 	return exceptions.ValidateException(validator.New(), dto)
 }
 
+type CustomerInterface interface {
+	New(customerDto *CustomerDto) (*Customer, error)
+	validatePassword(password string) bool
+}
+
 type Customer struct {
-	ID        primitive.ObjectID `json:"id" bson:"_id"`
-	Name      string             `json:"name" bson:"name"`
-	Email     string             `json:"email" bson:"email"`
-	Password  string             `json:"-" bson:"password"`
-	CPF       string             `json:"cpf" bson:"cpf"`
-	Phone     string             `json:"phone" bson:"phone"`
-	Cep       string             `json:"cep" bson:"cep"`
-	Active    bool               `json:"active" bson:"active,default=true"`
-	CreatedAt time.Time          `json:"create_at" bson:"created_at"`
-	UpdatedAt time.Time          `json:"update_at" bson:"updated_at"`
+	ID        string            `json:"id" bson:"id"`
+	Name      string            `json:"name" bson:"name"`
+	Email     string            `json:"email" bson:"email"`
+	Password  string            `json:"-" bson:"password"`
+	CPF       string            `json:"cpf" bson:"cpf"`
+	Phone     string            `json:"phone" bson:"phone"`
+	Cep       string            `json:"cep" bson:"cep"`
+	Gender    GenderEnumeration `json:"gender" bson:"gender"`
+	Birthday  time.Time         `json:"birthday" bson:"birthday"`
+	Active    bool              `json:"active" bson:"active,default=true"`
+	CreatedAt time.Time         `json:"create_at" bson:"created_at"`
+	UpdatedAt time.Time         `json:"update_at" bson:"updated_at"`
+}
+
+func (c *Customer) New(customerDto *CustomerDto) (*Customer, error) {
+	pwHash, err := bcrypt.GenerateFromPassword([]byte(customerDto.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	c.ID = uuid.New().String()
+	c.Name = customerDto.Name
+	c.Email = customerDto.Email
+	c.Password = string(pwHash)
+	c.CPF = customerDto.CPF
+	c.Phone = "+55" + customerDto.Phone
+	c.Gender = customerDto.Gender
+	c.Cep = customerDto.Cep
+	c.Birthday = customerDto.Birthday
+	c.Active = true
+	c.CreatedAt = time.Now()
+	c.UpdatedAt = time.Now()
+
+	return c, nil
 }
 
 func (c *Customer) validatePassword(password string) bool {
@@ -50,12 +79,12 @@ func (c *Customer) validatePassword(password string) bool {
 	return err == nil
 }
 
-type findQueryParams struct {
+type FindQueryParams struct {
 	Email string
 	CPF   string
 }
 
-func (params findQueryParams) Validate() error {
+func (params FindQueryParams) Validate() error {
 	if params.Email == "" && params.CPF == "" {
 		return exceptions.NewAppException(http.StatusBadRequest, "Email or CPF must be informed", nil)
 	}
@@ -65,9 +94,9 @@ func (params findQueryParams) Validate() error {
 type GenderEnumeration string
 
 const (
-	Male      = "Male"
-	Female    = "Female"
-	Undefined = "Undefined"
+	Male      GenderEnumeration = "Male"
+	Female    GenderEnumeration = "Female"
+	Undefined GenderEnumeration = "Undefined"
 )
 
 type CustomerDto struct {

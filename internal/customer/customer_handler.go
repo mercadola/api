@@ -27,6 +27,7 @@ func (h *CustomerHandler) RegisterRoutes(r *chi.Mux) {
 	r.Route("/customers", func(r chi.Router) {
 		r.Post("/", h.Create)
 		r.Patch("/{id}/positivate", h.PositivateCustomer)
+		r.Patch("/{id}/inactive", h.PositivateCustomer)
 		r.Put("/{id}", h.Update)
 		r.Get("/", h.Find)
 		r.Get("/{id}", h.FindById)
@@ -62,7 +63,7 @@ func (h *CustomerHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, token, _ := jwtAuth.Encode(map[string]interface{}{
-		"sub": customer.ID.Hex(),
+		"sub": customer.ID,
 		"exp": time.Now().Add(time.Second * time.Duration(jwtExpiresIn)).Unix(),
 	})
 
@@ -111,15 +112,7 @@ func (h *CustomerHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	objectId, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		error := exceptions.NewAppException(http.StatusBadRequest, err.Error(), nil)
-		json.NewEncoder(w).Encode(error)
-		return
-	}
-
-	err = h.Service.Delete(r.Context(), objectId)
+	err := h.Service.Delete(r.Context(), id)
 	if err != nil {
 		handleCustomError(w, err)
 		return
@@ -131,7 +124,7 @@ func (h *CustomerHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 func (handler *CustomerHandler) Find(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	query := findQueryParams{}
+	query := FindQueryParams{}
 	query.Email = r.URL.Query().Get("email")
 	query.CPF = r.URL.Query().Get("cpf")
 
@@ -161,15 +154,7 @@ func (handler *CustomerHandler) FindById(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	objectId, err := buildObjectId(id)
-	if err != nil {
-		appError, _ := err.(*exceptions.AppException)
-		w.WriteHeader(appError.StatusCode)
-		json.NewEncoder(w).Encode(appError)
-		return
-	}
-
-	customer, err := handler.Service.FindById(r.Context(), objectId)
+	customer, err := handler.Service.FindById(r.Context(), id)
 	if err != nil {
 		handleCustomError(w, err)
 		return
@@ -189,15 +174,26 @@ func (h *CustomerHandler) PositivateCustomer(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	objectId, err := buildObjectId(id)
+	err := h.Service.PositivateCustomer(r.Context(), id)
 	if err != nil {
-		appError, _ := err.(*exceptions.AppException)
-		w.WriteHeader(appError.StatusCode)
-		json.NewEncoder(w).Encode(appError)
+		handleCustomError(w, err)
 		return
 	}
 
-	err = h.Service.PositivateCustomer(r.Context(), objectId)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *CustomerHandler) InactiveCustomer(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		error := exceptions.NewAppException(http.StatusBadRequest, "Invalid id", nil)
+		json.NewEncoder(w).Encode(error)
+		return
+	}
+
+	err := h.Service.InactiveCustomer(r.Context(), id)
 	if err != nil {
 		handleCustomError(w, err)
 		return
@@ -217,17 +213,9 @@ func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	objectId, err := buildObjectId(id)
-	if err != nil {
-		appError, _ := err.(*exceptions.AppException)
-		w.WriteHeader(appError.StatusCode)
-		json.NewEncoder(w).Encode(appError)
-		return
-	}
-
 	var customerDto CustomerDto
 
-	err = json.NewDecoder(r.Body).Decode(&customerDto)
+	err := json.NewDecoder(r.Body).Decode(&customerDto)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		error := exceptions.NewAppException(http.StatusBadRequest, fmt.Sprintf("Error trying decode request => %s", err.Error()), nil)
@@ -240,7 +228,7 @@ func (h *CustomerHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.Service.Update(r.Context(), objectId, &customerDto)
+	err = h.Service.Update(r.Context(), id, &customerDto)
 	if err != nil {
 		handleCustomError(w, err)
 		return

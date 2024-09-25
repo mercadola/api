@@ -6,23 +6,16 @@ import (
 	"time"
 
 	"github.com/mercadola/api/internal/infrastruture/database"
+	"github.com/mercadola/api/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type UpdateNameResult struct {
-	ModifiedCount int64 `json:"modified_count"`
-}
-
-type DeleteResult struct {
-	DeletedCount int64 `json:"deleted_count"`
-}
-
 type ShoppingListRepositoryInterface interface {
 	Create(ctx context.Context, shoppingList *ShoppingList) error
-	UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*UpdateNameResult, error)
+	UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*utils.UpdateResult, error)
 	FindByCustomerId(ctx context.Context, customer_id string) (*[]ShoppingList, error)
-	Delete(ctx context.Context, customer_id, shopping_list_id string) (*DeleteResult, error)
+	Delete(ctx context.Context, customer_id, shopping_list_id string) (*utils.DeleteResult, error)
 }
 
 type ShoppingListRepository struct {
@@ -44,7 +37,7 @@ func (slr *ShoppingListRepository) Create(ctx context.Context, shoppingList *Sho
 
 	return nil
 }
-func (slr *ShoppingListRepository) UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*UpdateNameResult, error) {
+func (slr *ShoppingListRepository) UpdateName(ctx context.Context, name, customer_id, shopping_list_id string) (*utils.UpdateResult, error) {
 	filter := bson.M{
 		"customer_id": customer_id,
 		"id":          shopping_list_id,
@@ -60,7 +53,7 @@ func (slr *ShoppingListRepository) UpdateName(ctx context.Context, name, custome
 	if err != nil {
 		return nil, err
 	}
-	return &UpdateNameResult{ModifiedCount: result.ModifiedCount}, nil
+	return &utils.UpdateResult{ModifiedCount: result.ModifiedCount}, nil
 }
 
 func (slr *ShoppingListRepository) FindByCustomerId(ctx context.Context, customer_id string) (*[]ShoppingList, error) {
@@ -84,7 +77,7 @@ func (slr *ShoppingListRepository) FindByCustomerId(ctx context.Context, custome
 	return &shoppingList, nil
 }
 
-func (slr *ShoppingListRepository) Delete(ctx context.Context, customer_id, shopping_list_id string) (*DeleteResult, error) {
+func (slr *ShoppingListRepository) Delete(ctx context.Context, customer_id, shopping_list_id string) (*utils.DeleteResult, error) {
 	filter := bson.M{
 		"customer_id": customer_id,
 		"id":          shopping_list_id,
@@ -93,6 +86,6 @@ func (slr *ShoppingListRepository) Delete(ctx context.Context, customer_id, shop
 	if err != nil {
 		return nil, err
 	}
-	return &DeleteResult{DeletedCount: result.DeletedCount}, nil
+	return &utils.DeleteResult{DeletedCount: result.DeletedCount}, nil
 
 }

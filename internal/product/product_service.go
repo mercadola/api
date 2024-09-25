@@ -2,13 +2,15 @@ package product
 
 import (
 	"context"
+	"log/slog"
 )
 
 type ProductService struct {
 	Repository ProductRepository
+	Logger     *slog.Logger
 }
 
-func NewService(pr *ProductRepository) *ProductService {
+func NewService(pr *ProductRepository, logger *slog.Logger) *ProductService {
 	return &ProductService{
 		Repository: *pr,
 	}

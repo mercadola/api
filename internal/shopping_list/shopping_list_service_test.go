@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mercadola/api/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -69,7 +70,7 @@ func TestUpdateName(t *testing.T) {
 	t.Run("should update a shopping list name", func(t *testing.T) {
 		mockShoppingList := &ShoppingListMock{}
 		mockRepository := &ShoppingListRepositoryMock{}
-		mockRepository.On("UpdateName", context.Background(), "Novo nome", "any_customer_id", "any_shopping_list_id").Return(&UpdateNameResult{ModifiedCount: 1}, nil)
+		mockRepository.On("UpdateName", context.Background(), "Novo nome", "any_customer_id", "any_shopping_list_id").Return(&utils.UpdateResult{ModifiedCount: 1}, nil)
 		service := NewService(mockRepository, mockShoppingList)
 		err := service.UpdateName(context.Background(), "Novo nome", "any_customer_id", "any_shopping_list_id")
 
@@ -78,7 +79,7 @@ func TestUpdateName(t *testing.T) {
 	t.Run("should return error when could not update a shopping list name", func(t *testing.T) {
 		mockShoppingList := &ShoppingListMock{}
 		mockRepository := &ShoppingListRepositoryMock{}
-		mockRepository.On("UpdateName", context.Background(), "Novo nome", "any_customer_id", "any_shopping_list_id").Return(&UpdateNameResult{}, errors.New("any error"))
+		mockRepository.On("UpdateName", context.Background(), "Novo nome", "any_customer_id", "any_shopping_list_id").Return(&utils.UpdateResult{}, errors.New("any error"))
 		service := NewService(mockRepository, mockShoppingList)
 		err := service.UpdateName(context.Background(), "Novo nome", "any_customer_id", "any_shopping_list_id")
 
@@ -88,7 +89,7 @@ func TestUpdateName(t *testing.T) {
 	t.Run("should return error when could not find a shopping list to update", func(t *testing.T) {
 		mockShoppingList := &ShoppingListMock{}
 		mockRepository := &ShoppingListRepositoryMock{}
-		mockRepository.On("UpdateName", context.Background(), "Novo nome", "any_customer_id", "any_shopping_list_id").Return(&UpdateNameResult{ModifiedCount: 0}, nil)
+		mockRepository.On("UpdateName", context.Background(), "Novo nome", "any_customer_id", "any_shopping_list_id").Return(&utils.UpdateResult{ModifiedCount: 0}, nil)
 		service := NewService(mockRepository, mockShoppingList)
 		err := service.UpdateName(context.Background(), "Novo nome", "any_customer_id", "any_shopping_list_id")
 
@@ -132,7 +133,7 @@ func TestDelete(t *testing.T) {
 	t.Run("should delete a shopping list", func(t *testing.T) {
 		mockShoppingList := &ShoppingList{}
 		mockRepository := &ShoppingListRepositoryMock{}
-		mockRepository.On("Delete", context.Background(), "any_customer_id", "any_shopping_list_id").Return(&DeleteResult{DeletedCount: 1}, nil)
+		mockRepository.On("Delete", context.Background(), "any_customer_id", "any_shopping_list_id").Return(&utils.DeleteResult{DeletedCount: 1}, nil)
 		service := NewService(mockRepository, mockShoppingList)
 		err := service.Delete(context.Background(), "any_customer_id", "any_shopping_list_id")
 
@@ -141,7 +142,7 @@ func TestDelete(t *testing.T) {
 	t.Run("should return error when could not delete a shopping list", func(t *testing.T) {
 		mockRepository := &ShoppingListRepositoryMock{}
 		mockShoppingList := &ShoppingList{}
-		mockRepository.On("Delete", context.Background(), "any_customer_id", "any_shopping_list_id").Return(&DeleteResult{}, errors.New("any error"))
+		mockRepository.On("Delete", context.Background(), "any_customer_id", "any_shopping_list_id").Return(&utils.DeleteResult{}, errors.New("any error"))
 		service := NewService(mockRepository, mockShoppingList)
 		err := service.Delete(context.Background(), "any_customer_id", "any_shopping_list_id")
 
@@ -151,7 +152,7 @@ func TestDelete(t *testing.T) {
 	t.Run("should return error when could not find a shopping list to delete", func(t *testing.T) {
 		mockRepository := &ShoppingListRepositoryMock{}
 		mockShoppingList := &ShoppingList{}
-		mockRepository.On("Delete", context.Background(), "any_customer_id", "any_shopping_list_id").Return(&DeleteResult{DeletedCount: 0}, nil)
+		mockRepository.On("Delete", context.Background(), "any_customer_id", "any_shopping_list_id").Return(&utils.DeleteResult{DeletedCount: 0}, nil)
 		service := NewService(mockRepository, mockShoppingList)
 		err := service.Delete(context.Background(), "any_customer_id", "any_shopping_list_id")
 
