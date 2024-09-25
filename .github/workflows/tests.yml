@@ -1,0 +1,25 @@
+name: Rodar Testes
+
+on:
+  pull_request: # Alterado para pull_request
+    branches:
+      - develop
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest # Escolha o sistema operacional adequado
+
+    steps:
+      - uses: actions/checkout@v3 # Faz o download do seu código
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: "1.21" # Use a versão do Go que você precisa
+
+      - name: Instalar dependências
+        run: go mod download
+
+      - name: Rodar os testes
+        run: go test ./... # Ajuste o comando conforme necessário
