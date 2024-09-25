@@ -40,11 +40,11 @@ func main() {
 
 	cfg, err := config.GetConfig()
 	if err != nil {
-		logger.Error("Error trying load config", err)
+		logger.Error(fmt.Sprintf("Error trying load config %s", err.Error()))
 		os.Exit(1)
 	}
 
-	uri := cfg.Database.URI
+	uri := cfg.URI
 	if uri == "" {
 		log.Fatal("Set your 'MONGODB_URI' environment variable.")
 	}
