@@ -61,9 +61,10 @@ func (h *ProductHandler) CreateByEan(w http.ResponseWriter, r *http.Request) {
 
 func (handler *ProductHandler) Find(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	query := FindProductQueryParams{}
-	query.Ean = r.URL.Query().Get("ean")
-	query.Ncm = r.URL.Query().Get("ncm")
+	query := FindProductQueryParams{
+		Ean: r.URL.Query().Get("ean"),
+		Ncm: r.URL.Query().Get("ncm"),
+	}
 	resp, err := handler.Service.Find(r.Context(), query.Ean, query.Ncm)
 	if err != nil {
 		w.WriteHeader(err.StatusCode)
